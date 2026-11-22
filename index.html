@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redeban · Proyecto Integrador 2 · De la consulta al estado</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23000'/><path d='M7 9Q32 1 57 9v39q0 8-10 11-10 4-15 4-8 0-15-3Q7 57 7 48z' fill='%23FFF20D'/><path d='M21 49Q24 15 31 7q5 2 9 21 5 24 0 31-3 4-4 5h-6q-1-4 2-7 5-6 1-28-2-13-3-14-3 6-7 34-1 4-2 0z' fill='%23000'/></svg>" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700;8..60,800&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3EEE3; --card:#FBF8F1; --soft:#EBE4D3;
+  --ink:#1C1B19; --muted:#6B665B; --line:#D3CAB5;
+  --accent:#C2411F; --accent2:#1F5C4D; --ochre:#A8741A;
+  --code:#1C1B19;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:1rem}
+body{
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(28,27,25,.075) 1px, transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink);font-family:'Source Sans 3',system-ui,sans-serif;line-height:1.62;font-size:1.02rem
+}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.bar{position:fixed;top:0;left:0;height:3px;width:0;background:var(--accent);z-index:11;transition:width .2s}
+
+/* ---------- navegación lateral discreta ---------- */
+.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:10;display:flex;flex-direction:column;gap:.45rem}
+.dots a{display:block;font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--muted);text-decoration:none;text-align:right;padding:.1rem .35rem;border-right:2px solid var(--line)}
+.dots a:hover{color:var(--ink);border-right-color:var(--ink)}
+.dots a.on{color:var(--accent);border-right-color:var(--accent)}
+@media (max-width:1100px){.dots{display:none}}
+
+/* ---------- secciones ---------- */
+main{position:relative;z-index:1}
+section.s{position:relative;min-height:100vh;padding:10vh max(5vw,calc((100vw - 900px)/2));display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--line);opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+section.s > *{width:100%;min-width:0;margin-left:auto;margin-right:auto;max-width:900px}
+section.s.in,section.s:target{opacity:1;transform:none}
+section.s.hero{min-height:92vh}
+section.s.hero h1{text-align:center}
+section.s.hero > .kicker{text-align:center;justify-content:center}
+section.s.hero > .muted{text-align:center}
+section.s.compact{padding-top:6vh;padding-bottom:6vh}
+
+.kicker{font-family:'JetBrains Mono',monospace;font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
+.sec{display:inline-block;font-family:'Source Serif 4',Georgia,serif;font-weight:700;color:var(--paper);background:var(--accent);padding:.02rem .55rem;border-radius:2px;font-size:.95rem;letter-spacing:0}
+.pts{font-family:'JetBrains Mono',monospace;font-size:.68rem;border:1px solid var(--ochre);color:var(--ochre);padding:.05rem .45rem;border-radius:2px;letter-spacing:.06em}
+
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif}
+h1{font-weight:800;line-height:1.02;font-size:clamp(2.5rem,6.4vw,4.9rem);margin-bottom:1.1rem;letter-spacing:-.02em}
+h2{font-weight:700;line-height:1.1;font-size:clamp(1.65rem,3.4vw,2.55rem);margin-bottom:1.4rem;letter-spacing:-.01em}
+h3{font-weight:700;font-size:1.1rem;color:var(--ink);margin-bottom:.4rem}
+.strike{color:var(--muted);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:var(--accent)}
+.acc{color:var(--accent);box-shadow:inset 0 -.18em 0 rgba(194,65,31,.18)}
+p,li{font-size:1.02rem}
+.muted{color:var(--muted)}
+
+/* ---------- componentes ---------- */
+.grid{display:grid;gap:1.1rem;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));align-items:stretch}
+.grid > *{min-width:0}
+.card{height:100%;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1.2rem 1.3rem;box-shadow:3px 3px 0 var(--line)}
+.card.accent{border-left:4px solid var(--accent2)}
+.card.warn{border-left:4px solid var(--accent)}
+.card.ochre{border-left:4px solid var(--ochre)}
+.grid > .card{display:flex;flex-direction:column}
+.card p + p{margin-top:.6rem}
+.callout{border-left:4px solid var(--accent);background:var(--soft);padding:1rem 1.2rem;border-radius:0 4px 4px 0;margin-top:1.2rem}
+.callout.g{border-left-color:var(--accent2)}
+.callout.o{border-left-color:var(--ochre)}
+.callout h3{margin-bottom:.3rem}
+code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:var(--soft);padding:.05rem .35rem;border-radius:2px}
+pre{font-family:'JetBrains Mono',monospace;background:var(--code);color:#EDE6D6;border-radius:4px;padding:1rem 1.2rem;font-size:.8rem;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;overflow-x:hidden;overflow-y:auto;max-width:100%;max-height:75vh}
+pre code{background:none;padding:0;font-size:inherit}
+.k{color:#E7B76A} .s2{color:#A9CBA0} .cm{color:#8f897b} .del{color:#F29A82;text-decoration:line-through}
+.code-pair{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.code-pair > pre{height:100%;margin:0;box-shadow:3px 3px 0 var(--line)}
+.code-pair > .tw{height:100%}
+.tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:.12rem .55rem;border-radius:2px;border:1px solid var(--ink);color:var(--ink);margin:0 .4rem .4rem 0;letter-spacing:.03em}
+.tag.amber{border-color:var(--ochre);color:var(--ochre)}
+.tag.red{border-color:var(--accent);color:var(--accent)}
+.tag.green{border-color:var(--accent2);color:var(--accent2)}
+ul.clean{list-style:none}
+ul.clean li{padding-left:1.4rem;position:relative;margin-bottom:.55rem}
+ul.clean li:before{content:"";position:absolute;left:0;top:.62em;width:.5rem;height:.5rem;background:var(--accent)}
+ul.clean.g li:before{background:var(--accent2)}
+a{color:var(--accent2)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:3px 3px 0 var(--line)}
+table{width:100%;border-collapse:collapse;font-size:.94rem;background:var(--card)}
+th,td{text-align:left;padding:.62rem .75rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--muted);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid var(--ink)}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-family:'JetBrains Mono',monospace;white-space:nowrap}
+figure{margin:1.2rem 0}
+figure svg{width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:3px 3px 0 var(--line)}
+figcaption{font-size:.92rem;color:var(--muted);margin-top:.7rem}
+figcaption b{color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:500}
+
+.row{display:flex;gap:.6rem;flex-wrap:wrap;margin:.6rem 0 1rem;align-items:center}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--ink);padding:.48rem 1rem;border-radius:2px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.8rem;transition:.15s;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--soft)}
+.btn.on{background:var(--ink);color:var(--paper)}
+.btn.amberon.on{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.btn:focus-visible,.sb:focus-visible{outline:2px solid var(--ochre);outline-offset:3px}
+.view{display:none}.view.on{display:block}
+
+.index a{display:flex;gap:1rem;align-items:baseline;padding:.85rem 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.index a:hover h3{color:var(--accent)}
+.index .n{font-family:'Source Serif 4',Georgia,serif;font-weight:800;color:var(--accent);width:3.4rem;font-size:1.4rem;flex:none}
+.index .p{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--ochre);white-space:nowrap}
+.walk{border:1.5px solid var(--ink);border-radius:4px;background:var(--card);padding:1.2rem 1.4rem;min-height:165px;box-shadow:3px 3px 0 var(--line)}
+.walk .lbl{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.walk h3{margin-top:.4rem}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:.8rem 1.4rem;margin-top:2.2rem;width:100%;max-width:920px}
+.meta div{border-top:1px solid var(--ink);padding-top:.5rem}
+.meta span{display:block;font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.meta .team-meta{grid-column:1/-1}
+.team-meta b{font-weight:400;white-space:nowrap}
+.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.2rem}
+.steps li{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent2);padding:1rem 1.1rem;line-height:1.5}
+.steps b{display:block;font-family:'Source Serif 4',Georgia,serif;font-size:1.1rem;margin-bottom:.35rem}
+details.more{margin-top:1.3rem;background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:1rem 1.2rem}
+details.more summary{cursor:pointer;font-weight:600;color:var(--accent2)}
+details.more p,details.more ul{margin-top:.7rem}
+
+/* ---------- simulador de portada ---------- */
+.sim{margin:1.8rem 0;border:1.5px solid var(--ink);border-radius:4px;background:var(--card);padding:1.1rem 1.2rem 1.2rem;box-shadow:3px 3px 0 var(--line)}
+.sim-ctl{display:grid;grid-template-columns:repeat(3,190px) minmax(0,1fr);gap:.5rem;align-items:center;margin-bottom:.7rem}
+.sim-hint{font-family:'JetBrains Mono',monospace;font-size:.74rem;line-height:1.45;color:var(--muted)}
+.sb{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:transparent;color:var(--ink);border:1px solid var(--ink);border-radius:2px;padding:.48rem .8rem;cursor:pointer;transition:.15s;width:100%}
+.sb:hover{background:var(--soft)}
+.sb.pri{background:var(--ink);color:var(--paper)}
+.sb.pri:hover{background:var(--accent2);border-color:var(--accent2)}
+.sb.warn{border-color:var(--accent);color:var(--accent)}
+.sb.warn:hover,.sb.warn.on{background:var(--accent);color:var(--paper)}
+.sim-svg{width:100%;height:auto;display:block}
+.sim-svg text{font-family:'JetBrains Mono',monospace;text-anchor:middle;fill:var(--ink)}
+.sim-svg .hd{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:15px}
+.sim-svg .tp{font-size:12.5px;font-weight:600}
+.sim-svg .t2{font-size:11px;fill:var(--muted)}
+.sim-svg .t3{font-size:10.5px;fill:var(--muted)}
+.nd .body{fill:var(--card);stroke:var(--line);stroke-width:2;transition:stroke .3s,fill .3s}
+.nd.ok .body{stroke:var(--accent2)}
+.nd.on .body{stroke:var(--ink)}
+.nd.bad .body{stroke:var(--accent);fill:#F6E3DC}
+.nd.off .body{stroke:var(--muted);fill:var(--soft);stroke-dasharray:5 4}
+.nd.off text{opacity:.45}
+.ring{fill:none;stroke:var(--ochre);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.nd.on .ring{animation:ringp 1.3s ease-out infinite}
+.nd.bad .ring{stroke:var(--accent);animation:ringp 1.3s ease-out infinite}
+@keyframes ringp{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.06)}}
+.rt{fill:none;stroke:var(--line);stroke-width:3;stroke-linecap:round;transition:stroke .3s}
+.rt.on{stroke:var(--accent2);stroke-dasharray:12 8;animation:flow .6s linear infinite}
+.rt.bad{stroke:var(--accent);stroke-dasharray:6 6;animation:flow .6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-20}}
+.lk{fill:none;stroke:#A39A85;stroke-width:2;stroke-dasharray:4 4}
+#pkt rect{fill:var(--ink)}
+#pkt text{fill:var(--paper);font-size:11px;font-weight:700}
+#pkt.bad rect{fill:var(--accent)}
+#nopeText{fill:var(--accent);font-size:12px;font-weight:600}
+.sim-steps{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:.5rem;margin-top:.9rem}
+.sim-steps li{font-size:.82rem;line-height:1.35;border-top:3px solid var(--line);padding-top:.4rem;color:var(--muted);transition:.25s}
+.sim-steps li.done{border-top-color:var(--accent2);color:var(--ink)}
+.sim-steps li.cur{border-top-color:var(--accent);color:var(--ink);font-weight:500}
+.sim-steps li.bad{border-top-color:var(--accent);color:var(--accent)}
+.counters{display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:.7rem;font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--muted)}
+.counters b{color:var(--ink);font-weight:500}
+
+/* ---------- calculadoras ---------- */
+.calc{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+.inputs{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1rem 1.1rem;box-shadow:3px 3px 0 var(--line)}
+.inputs h3{font-size:.95rem;margin:.9rem 0 .4rem;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.inputs h3:first-child{margin-top:0}
+.fld{display:grid;grid-template-columns:minmax(0,1fr) 7.2rem;gap:.6rem;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--line)}
+.fld label{font-size:.9rem;line-height:1.3}
+.fld label small{display:block;color:var(--muted);font-size:.76rem}
+.fld input{width:100%;font-family:'JetBrains Mono',monospace;font-size:.85rem;padding:.3rem .45rem;border:1px solid var(--ink);border-radius:2px;background:var(--paper);color:var(--ink);text-align:right}
+.est{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.08em;color:var(--ochre);border:1px solid var(--ochre);border-radius:2px;padding:0 .3rem;margin-left:.3rem;vertical-align:1px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+.kpi{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--ink);border-radius:4px;padding:.8rem .9rem;box-shadow:3px 3px 0 var(--line)}
+.kpi span{display:block;font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kpi b{display:block;font-family:'Source Serif 4',Georgia,serif;font-size:1.7rem;line-height:1.15;margin-top:.2rem}
+.kpi.g{border-top-color:var(--accent2)} .kpi.g b{color:var(--accent2)}
+.kpi.r{border-top-color:var(--accent)} .kpi.r b{color:var(--accent)}
+.bars{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:.9rem 1rem;box-shadow:3px 3px 0 var(--line)}
+.brow{display:grid;grid-template-columns:9.5rem minmax(0,1fr) 5.6rem;gap:.6rem;align-items:center;font-size:.84rem;padding:.22rem 0}
+.brow .tr{background:var(--soft);height:12px;border-radius:2px;overflow:hidden}
+.brow .fl{height:100%;background:var(--accent2);transition:width .35s}
+.brow.cost .fl{background:var(--accent)}
+.brow .v{font-family:'JetBrains Mono',monospace;font-size:.8rem;text-align:right}
+.formula{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:var(--soft);border-left:4px solid var(--ochre);padding:.7rem .9rem;margin-top:1rem;line-height:1.6;white-space:pre-wrap}
+
+/* ---------- compatibilidad ---------- */
+.compat-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-top:1rem}
+.compat-card{display:flex;flex-direction:column;border:1px solid var(--line);border-top:4px solid var(--ochre);border-radius:4px;background:var(--card);padding:1.1rem;box-shadow:3px 3px 0 var(--line)}
+.compat-card.selected{border-color:var(--accent2);border-top-color:var(--accent2)}
+.compat-card h3{font-size:1.15rem;margin:.4rem 0 .6rem}
+.compat-rule{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:var(--soft);padding:.55rem .6rem;margin-bottom:.8rem;border-radius:2px;text-align:center}
+.compat-card p{font-size:.92rem}
+.lab{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:1.1rem;align-items:start;margin-top:1rem}
+.lab .opts{display:flex;flex-direction:column;gap:.5rem}
+.lab .opts .btn{text-align:left}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:center;margin-top:.8rem;padding:.8rem 1rem;border:2px solid var(--accent2);background:var(--card);border-radius:4px}
+.verdict.no{border-color:var(--accent)}
+.verdict .http{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:1.25rem;color:var(--accent2)}
+.verdict.no .http{color:var(--accent)}
+.checks{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.6rem}
+
+/* ---------- línea de tiempo de interacción ---------- */
+.tl-svg text{font-family:'JetBrains Mono',monospace;text-anchor:middle;fill:var(--ink)}
+.tl-svg .hd{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:15px}
+.tl-svg .t2{font-size:11px;fill:var(--muted)}
+.tl-svg .box{transition:all .6s ease}
+.mode-lbl{font-size:13px;font-weight:600}
+.stage-bar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin:.6rem 0 1rem}
+.stage-bar .btn{width:100%}
+
+/* ---------- topologías ---------- */
+.topo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.topo .card{border-top:6px solid var(--ink)}
+.topo .sa{border-top-color:#E7B76A}
+.topo .pl{border-top-color:#5C8FB0}
+.topo .en{border-top-color:#9A79B8}
+.topo .cs{border-top-color:#D98A6C}
+.topo .teams{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted);margin:.2rem 0 .6rem}
+
+/* ---------- antes / después del GP ---------- */
+.ba{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.ba .col{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1rem;box-shadow:3px 3px 0 var(--line)}
+.ba ol{list-style:none;counter-reset:t}
+.ba li{counter-increment:t;display:grid;grid-template-columns:1.6rem minmax(0,1fr) auto;gap:.5rem;padding:.3rem 0;border-bottom:1px dashed var(--line);font-size:.88rem;opacity:.25;transition:opacity .3s}
+.ba li.show{opacity:1}
+.ba li::before{content:counter(t);font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--muted)}
+.ba li span{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);white-space:nowrap}
+.ba .who{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:.05rem .4rem;border-radius:2px}
+.ba li.dev .who{color:var(--accent);border:1px solid var(--accent)}
+.ba li.plat .who{color:var(--accent2);border:1px solid var(--accent2)}
+.ba .tot{margin-top:.7rem;font-family:'JetBrains Mono',monospace;font-size:.8rem}
+
+/* ---------- demos y fases ---------- */
+.demos{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;counter-reset:d}
+.demos li{counter-increment:d;display:grid;grid-template-columns:2rem minmax(0,1fr);gap:.6rem;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:.7rem .8rem;font-size:.92rem}
+.demos li::before{content:counter(d);display:grid;place-items:center;width:1.7rem;height:1.7rem;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.78rem}
+.demos li.opt::before{background:var(--ochre)}
+.st{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:.05rem .4rem;border-radius:2px;border:1px solid var(--muted);color:var(--muted);white-space:nowrap}
+
+@media (max-width:900px){
+  section.s{padding:9vh 6vw}
+  .calc,.lab{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .two,.three,.four,.code-pair,.compat-options,.topo,.ba,.demos,.steps,.kpis{grid-template-columns:minmax(0,1fr)}
+  .sim-ctl{grid-template-columns:1fr}
+  pre{font-size:.74rem;padding:.9rem}
+  .brow{grid-template-columns:7rem minmax(0,1fr) 4.8rem}
+  .index .p{display:none}
+}
+@media (prefers-reduced-motion: reduce){section.s{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="bar" id="bar"></div>
+<nav class="dots" id="nav">
+  <a href="#inicio" data-nav="inicio">Inicio</a>
+  <a href="#contenido" data-nav="contenido">Índice</a>
+  <a href="#p1" data-nav="p1">P1 → P2</a>
+  <a href="#i" data-nav="i">I</a>
+  <a href="#ii" data-nav="ii">II</a>
+  <a href="#iii" data-nav="iii">III</a>
+  <a href="#iv" data-nav="iv">IV</a>
+  <a href="#plan" data-nav="plan">Plan</a>
+  <a href="#cierre" data-nav="cierre">Cierre</a>
+</nav>
+
+<main>
+
+<!-- PORTADA -->
+<section class="s hero" id="inicio" data-group="inicio">
+  <div class="kicker">ARTI-4219 Arquitectura de Plataformas · Proyecto Integrador #2</div>
+  <h1>Redeban:<br>de la <span class="strike">consulta</span> al <span class="acc">estado</span></h1>
+  <p class="muted" style="max-width:740px">El caso Comercios como hilo conductor: un stream ECST con contrato Avro, equipos rediseñados con Team Topologies, la plataforma gobernada como producto y una PoC con Dapr y Apicurio que lo demuestra.</p>
+  <div class="sim" id="sim">
+    <div class="sim-ctl">
+      <button class="sb pri" id="simPub" type="button">▶ Publicar ficha</button>
+      <button class="sb warn" id="simBad" type="button">✕ Quitar «estado»</button>
+      <button class="sb warn" id="simOff" type="button">⏻ Apagar Comercios</button>
+      <span class="sim-hint" id="simHint">Comercios publica la ficha completa; Autorización decide con su copia local.</span>
+    </div>
+    <svg class="sim-svg" viewBox="0 0 1000 285" role="img" aria-label="Flujo ECST de Comercios a Autorización con Dapr, Apicurio y Kafka">
+      <path class="rt" id="rEvent" d="M220 110H270"/>
+      <path class="rt" id="rTopic" d="M470 110H520"/>
+      <path class="rt" id="rCons" d="M720 110H770"/>
+      <path class="rt" id="rTx" d="M745 205V185Q745 172 790 172H870V160"/>
+      <path class="rt" id="rCand" d="M220 235H270"/>
+      <path class="lk" d="M370 205V160"/>
+      <g class="nd" id="n-com"><rect class="ring" x="20" y="60" width="200" height="100" rx="3"/><rect class="body" x="20" y="60" width="200" height="100" rx="3"/><text class="hd" x="120" y="91">comercios-svc</text><text class="t2" x="120" y="115" id="comTxt">ficha completa · v7</text><text class="t3" x="120" y="138">dominio Comercios</text></g>
+      <g class="nd" id="n-dapr"><rect class="ring" x="270" y="60" width="200" height="100" rx="3"/><rect class="body" x="270" y="60" width="200" height="100" rx="3"/><text class="hd" x="370" y="91">Sidecar Dapr</text><text class="t2" x="370" y="115">serializa Avro</text><text class="t3" x="370" y="138" id="daprTxt">localhost:3500</text></g>
+      <g class="nd" id="n-topic"><rect class="ring" x="520" y="60" width="200" height="100" rx="3"/><rect class="body" x="520" y="60" width="200" height="100" rx="3"/><text class="tp" x="620" y="94">estado-comercio</text><text class="t2" x="620" y="119">clave merchantId</text><text class="t3" x="620" y="140">Kafka · compactado</text></g>
+      <g class="nd" id="n-aut"><rect class="ring" x="770" y="60" width="200" height="100" rx="3"/><rect class="body" x="770" y="60" width="200" height="100" rx="3"/><text class="hd" x="870" y="91">autorizacion-svc</text><text class="t2" x="870" y="115" id="autTxt">copia local · v7</text><text class="t3" x="870" y="138">decide sin llamar</text></g>
+      <g class="nd" id="n-ci"><rect class="ring" x="20" y="205" width="200" height="60" rx="3"/><rect class="body" x="20" y="205" width="200" height="60" rx="3"/><text class="hd" x="120" y="232">GP · candidato</text><text class="t3" x="120" y="251" id="ciTxt">esquema v1 vigente</text></g>
+      <g class="nd" id="n-reg"><rect class="ring" x="270" y="205" width="200" height="60" rx="3"/><rect class="body" x="270" y="205" width="200" height="60" rx="3"/><text class="hd" x="370" y="230">Apicurio Registry</text><text class="t2" x="370" y="247">FULL_TRANSITIVE</text><text class="t3" x="370" y="261" id="regTxt">historial protegido</text></g>
+      <g class="nd" id="n-tx"><rect class="ring" x="520" y="205" width="450" height="60" rx="3"/><rect class="body" x="520" y="205" width="450" height="60" rx="3"/><text class="tp" x="745" y="232">Transacciones POS → autorización</text><text class="t3" x="745" y="251" id="txTxt">0 consultas a comercios-api por transacción</text></g>
+      <text id="nopeText" x="620" y="187" style="opacity:0">409 · el GP se detiene · nada llega al tópico</text>
+      <g id="pkt" style="opacity:0"><rect x="-40" y="-12" width="80" height="24" rx="2"/><text id="pktTxt" y="4">ficha</text></g>
+    </svg>
+    <ol class="sim-steps" id="simSteps">
+      <li>Ficha completa</li>
+      <li>Contrato Avro</li>
+      <li>FULL_TRANSITIVE</li>
+      <li>estado-comercio</li>
+      <li>Copia local</li>
+    </ol>
+    <div class="counters"><span>fichas publicadas: <b id="cPub">0</b></span><span>rechazos 409: <b id="cRej">0</b></span><span>transacciones aprobadas: <b id="cTx">0</b></span><span>llamadas a comercios-api: <b>0</b></span></div>
+  </div>
+  <div class="meta">
+    <div><span>Programa</span>Maestría en Arquitecturas de TI · Uniandes</div>
+    <div><span>Periodo</span>2026-20 · Grupo 2</div>
+    <div><span>Organización</span>Redeban · red de pagos</div>
+    <div><span>Plataforma</span>Kafka · Dapr · Apicurio Registry · Avro</div>
+    <div class="team-meta"><span>Equipo</span><b>Daniel Rubio Sierra</b> · <b>Diego Latorre Carrasquilla</b> · <b>Andrés Felipe Suárez Moscoso</b> · <b>Maycol Alejandro Yate Estupiñán</b> · <b>Ruben Antonio Parra Medrano</b></div>
+  </div>
+</section>
+
+<!-- CONTENIDO -->
+<section class="s" id="contenido" data-group="contenido">
+  <div class="kicker">Contenido</div>
+  <h2>Índice</h2>
+  <div class="index">
+    <a href="#p1"><span class="n">0</span><div><h3>Del P1 al P2</h3><p class="muted">Qué dejó la Entrega 1 y el hilo conductor del caso Comercios</p></div></a>
+    <a href="#i"><span class="n">I</span><div><h3>Diseño orientado a eventos y contratos</h3><p class="muted">Migración a ECST, contrato Avro y FULL_TRANSITIVE</p></div><span class="p">30 pts</span></a>
+    <a href="#ii"><span class="n">II</span><div><h3>Conway inversa y Team Topologies</h3><p class="muted">Cuatro topologías y la transición de Colaboración a X-as-a-Service</p></div><span class="p">20 pts</span></a>
+    <a href="#iii"><span class="n">III</span><div><h3>La plataforma como producto y métricas</h3><p class="muted">Two-in-a-Box, 80/20, InnerSourcing y tablero DORA/SPACE/ROI</p></div><span class="p">30 pts</span></a>
+    <a href="#iv"><span class="n">IV</span><div><h3>Extensión de la PoC</h3><p class="muted">Pluggable Message Brokers con Dapr y Schema Registry con Apicurio</p></div><span class="p">20 pts</span></a>
+    <a href="#plan"><span class="n">→</span><div><h3>Plan de trabajo</h3><p class="muted">Fases, responsables, riesgos y decisiones pendientes</p></div></a>
+  </div>
+</section>
+
+<!-- P1 → P2 -->
+<section class="s" id="p1" data-group="p1">
+  <div class="kicker">Contexto · Del P1 al P2</div>
+  <h2>La Entrega 1 automatizó lo estático; ahora la plataforma habilita lo dinámico</h2>
+  <div class="grid two">
+    <div class="card ochre"><span class="tag amber">Entrega 1</span><h3>Redeban hoy</h3><ul class="clean"><li>Infraestructura tercerizada: cada recurso pasa por un ticket.</li><li>Más de 300 APIs en IBM API Connect con DataPower.</li><li>Fricciones F1 a F5 diagnosticadas.</li><li><b>GP1</b>: microservicio + PostgreSQL, de 3–4 días de espera a ~10 minutos desde un formulario.</li></ul></div>
+    <div class="card accent"><span class="tag green">Entrega 2</span><h3>Lo que agregamos</h3><ul class="clean g"><li>Un ecosistema de eventos con ECST y contratos formales.</li><li>Equipos reorganizados alrededor de la plataforma.</li><li>Gobierno de producto: 80/20 e InnerSourcing.</li><li>Un tablero que justifica la inversión ante la junta.</li><li><b>GP2</b>: stream ECST como capacidad de autoservicio.</li></ul></div>
+  </div>
+  <div class="callout g"><h3>Hilo conductor: el caso Comercios</h3><p>El flujo ECST que diseña la <b>Sección I</b> es el mismo stream que implementa la PoC de la <b>Sección IV</b>, y la <b>Sección III</b> lo ofrece como Golden Path oficial (GP2). La <b>Sección II</b> define quién es dueño de cada pieza.</p></div>
+  <div class="tw" style="margin-top:1.2rem"><table>
+    <thead><tr><th>Criterio de la rúbrica</th><th>Pts</th><th>Dónde se responde</th></tr></thead>
+    <tbody>
+      <tr><td>Migración a ECST</td><td class="num">15</td><td><a href="#i">I</a> · flujo Comercios → Autorización y reducción de carga</td></tr>
+      <tr><td>Contrato y Schema Registry</td><td class="num">15</td><td><a href="#i-contrato">I</a> · Avro, FULL_TRANSITIVE y laboratorio de cambios</td></tr>
+      <tr><td>Conway inversa y topologías</td><td class="num">10</td><td><a href="#ii">II</a> · cuatro topologías y handoffs eliminados</td></tr>
+      <tr><td>Dinámicas de interacción</td><td class="num">10</td><td><a href="#ii-dinamicas">II</a> · línea de tiempo de modos</td></tr>
+      <tr><td>PaaP, 80/20 e InnerSourcing</td><td class="num">15</td><td><a href="#iii">III</a> · Two-in-a-Box, curación y contribución</td></tr>
+      <tr><td>Tablero DORA/SPACE/ROI</td><td class="num">15</td><td><a href="#iii-roi">III</a> · calculadora y métricas</td></tr>
+      <tr><td>PoC y evidencia</td><td class="num">20</td><td><a href="#iv">IV</a> · GP publicador/suscriptor y 8 demos</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- I · AS-IS / TO-BE -->
+<section class="s" id="i" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Diseño orientado a eventos · Migración a ECST <span class="pts">15 pts</span></div>
+  <h2>Cada transacción le pregunta a Comercios lo mismo</h2>
+  <p>Flujo crítico: <b>Comercios → Autorización</b> (y, con el mismo stream, Antifraude y Liquidación). Para aprobar un pago, Autorización necesita saber si el comercio está activo, su MCC y su límite diario.</p>
+  <div class="row" data-tabs="asis">
+    <button class="btn amberon on" type="button" data-tab="hoy">Hoy · sincrónico</button>
+    <button class="btn amberon" type="button" data-tab="ecst">Con ECST</button>
+  </div>
+  <div data-views="asis">
+    <figure class="view on" data-view="hoy"><svg viewBox="0 0 1000 250" role="img" aria-label="Hoy: Autorización consulta comercios-api por API Connect y DataPower en cada transacción" style="font-family:Arial,sans-serif">
+      <defs><marker id="ma" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#C2411F"/></marker></defs>
+      <g fill="#FBF8F1" stroke="#D3CAB5" stroke-width="1.5"><rect x="20" y="70" width="200" height="100" rx="6"/><rect x="290" y="70" width="200" height="100" rx="6"/><rect x="560" y="70" width="180" height="100" rx="6"/><rect x="800" y="70" width="180" height="100" rx="6"/></g>
+      <g text-anchor="middle" fill="#1C1B19"><text x="120" y="110" font-size="20" font-weight="700">Transacción</text><text x="120" y="138" font-size="14" fill="#6B665B">POS / e-commerce</text><text x="390" y="110" font-size="20" font-weight="700">Autorización</text><text x="390" y="138" font-size="14" fill="#6B665B">¿comercio activo?</text><text x="650" y="110" font-size="18" font-weight="700">API Connect</text><text x="650" y="138" font-size="14" fill="#6B665B">+ DataPower</text><text x="890" y="110" font-size="18" font-weight="700">comercios-api</text><text x="890" y="138" font-size="14" fill="#6B665B">dominio Comercios</text></g>
+      <g stroke="#C2411F" stroke-width="2" fill="none" marker-end="url(#ma)"><path d="M220 120H290"/><path d="M490 120H560" stroke-dasharray="7 5"/><path d="M740 120H800" stroke-dasharray="7 5"/></g>
+      <text x="645" y="210" text-anchor="middle" font-size="16" fill="#C2411F">1 transacción = 1 consulta sincrónica · si Comercios cae, Autorización no decide</text>
+      <text x="645" y="45" text-anchor="middle" font-size="14" fill="#6B665B">GET /comercios/{merchantId} en la ruta crítica del pago</text>
+    </svg><figcaption><b>AS-IS.</b> La consulta vive en la ruta crítica: latencia, cupo del gateway y disponibilidad de Comercios se suman a cada pago.</figcaption></figure>
+    <figure class="view" data-view="ecst"><svg viewBox="0 0 1000 250" role="img" aria-label="Con ECST: Comercios publica la ficha en estado-comercio y Autorización consulta su copia local" style="font-family:Arial,sans-serif">
+      <defs><marker id="mg" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#1F5C4D"/></marker></defs>
+      <g fill="#FBF8F1" stroke="#1F5C4D" stroke-width="1.6"><rect x="20" y="40" width="200" height="90" rx="6"/><rect x="290" y="40" width="220" height="90" rx="6"/><rect x="590" y="40" width="190" height="90" rx="6"/><rect x="590" y="160" width="190" height="70" rx="6"/></g>
+      <rect x="830" y="40" width="150" height="190" rx="6" fill="#FBF8F1" stroke="#D3CAB5" stroke-width="1.5"/>
+      <g text-anchor="middle" fill="#1C1B19"><text x="120" y="78" font-size="19" font-weight="700">Comercios</text><text x="120" y="104" font-size="13" fill="#6B665B">publica al cambiar</text><text x="400" y="78" font-size="18" font-weight="700">estado-comercio</text><text x="400" y="104" font-size="13" fill="#6B665B">compactado · clave merchantId</text><text x="685" y="78" font-size="18" font-weight="700">Autorización</text><text x="685" y="104" font-size="13" fill="#6B665B">copia local de fichas</text><text x="685" y="192" font-size="16" font-weight="700">Antifraude · Liquidación</text><text x="685" y="214" font-size="13" fill="#6B665B">mismo stream</text><text x="905" y="125" font-size="16" font-weight="700">Transacción</text><text x="905" y="148" font-size="13" fill="#6B665B">consulta local</text></g>
+      <g stroke="#1F5C4D" stroke-width="2" fill="none" marker-end="url(#mg)"><path d="M220 85H290"/><path d="M510 85H590"/><path d="M510 110Q550 110 560 150T590 195"/><path d="M830 95H780"/></g>
+      <text x="420" y="225" text-anchor="middle" font-size="15" fill="#1F5C4D">consultas ∝ cambios de comercios, no transacciones</text>
+    </svg><figcaption><b>TO-BE.</b> Comercios transfiere su estado una vez por cambio; cada consumidor materializa la ficha y la consulta localmente.</figcaption></figure>
+  </div>
+  <div class="grid three">
+    <div class="card accent"><h3>La carga sigue a los cambios</h3><p>Las consultas a Comercios crecen con los cambios de comercios, no con las transacciones.</p></div>
+    <div class="card accent"><h3>API Connect sale de la ruta</h3><p>El gateway deja de ser cuello de botella para esta consulta; conserva su papel en el tráfico externo.</p></div>
+    <div class="card accent"><h3>Autonomía ante fallas</h3><p>Si Comercios se cae, Autorización sigue aprobando con la última ficha conocida.</p></div>
+  </div>
+</section>
+
+<!-- I · CARGA -->
+<section class="s compact" id="i-carga" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Migración a ECST · Reducción de carga</div>
+  <h2>Cuánta carga sale de las APIs sincrónicas</h2>
+  <p class="muted" style="margin-bottom:1rem">Mueva los supuestos. Todos los valores son <span class="est">ESTIMACIÓN</span> para ilustrar el orden de magnitud; se reemplazan con datos de Redeban cuando estén disponibles.</p>
+  <div class="calc">
+    <div class="inputs">
+      <h3>Supuestos</h3>
+      <div class="fld"><label>Transacciones por segundo (promedio)<small>autorizaciones que hoy consultan comercios-api</small></label><input type="number" id="lTps" value="400" min="0"></div>
+      <div class="fld"><label>Cambios de fichas por día<small>altas, suspensiones, cambios de límite</small></label><input type="number" id="lChg" value="5000" min="0"></div>
+      <div class="fld"><label>Consumidores del stream<small>Autorización, Antifraude, Liquidación</small></label><input type="number" id="lCons" value="3" min="1"></div>
+    </div>
+    <div>
+      <div class="kpis">
+        <div class="kpi r"><span>Consultas/día hoy</span><b id="lToday">–</b></div>
+        <div class="kpi g"><span>Lecturas/día con ECST</span><b id="lEcst">–</b></div>
+        <div class="kpi g"><span>Reducción</span><b id="lRed">–</b></div>
+        <div class="kpi"><span>Consultas por pago</span><b>1 → 0</b></div>
+      </div>
+      <div class="formula">Hoy  = TPS × 86 400
+ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
+    </div>
+  </div>
+</section>
+
+<!-- I · PATRONES -->
+<section class="s compact" id="i-patrones" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Migración a ECST · Por qué no otro patrón</div>
+  <h2>ECST no es un delta, ni una notificación, ni Event Sourcing</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Patrón</th><th>Qué viaja</th><th>Problema en este flujo</th><th>Veredicto</th></tr></thead>
+    <tbody>
+      <tr><td><b>Delta</b></td><td><code>limiteDiario: +500000</code></td><td>No es compactable: para conocer el estado hay que reproducir todos los cambios; perder uno corrompe la copia.</td><td><span class="tag red">descartado</span></td></tr>
+      <tr><td><b>Notificación</b></td><td><code>comercio 123 cambió</code></td><td>Antipatrón aquí: cada consumidor vuelve a llamar a comercios-api. El acoplamiento sincrónico sigue intacto.</td><td><span class="tag red">descartado</span></td></tr>
+      <tr><td><b>Event Sourcing</b></td><td>todos los hechos del dominio</td><td>Es persistencia <i>dentro</i> del dominio, no integración <i>entre</i> dominios. Expondría el modelo interno de Comercios.</td><td><span class="tag amber">otro problema</span></td></tr>
+      <tr><td><b>ECST</b></td><td>la ficha completa del comercio</td><td>Autosuficiente, compactable por <code>merchantId</code> y reproducible desde el offset 0.</td><td><span class="tag green">elegido</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- I · CONTRATO -->
+<section class="s" id="i-contrato" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Contrato de datos y gobernanza <span class="pts">15 pts</span></div>
+  <h2>El contrato <code>MerchantState</code> en Avro</h2>
+  <div class="grid code-pair">
+    <pre aria-label="Esquema Avro MerchantState"><span class="cm">// estado-comercio · key = merchantId</span>
+{
+  <span class="k">"type"</span>: <span class="s2">"record"</span>,
+  <span class="k">"name"</span>: <span class="s2">"MerchantState"</span>,
+  <span class="k">"namespace"</span>: <span class="s2">"co.redeban.comercios.v1"</span>,
+  <span class="k">"fields"</span>: [
+    {<span class="k">"name"</span>: <span class="s2">"merchantId"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>},
+    {<span class="k">"name"</span>: <span class="s2">"estado"</span>, <span class="k">"type"</span>: {<span class="k">"type"</span>: <span class="s2">"enum"</span>, <span class="k">"name"</span>: <span class="s2">"Estado"</span>,
+       <span class="k">"symbols"</span>: [<span class="s2">"ACTIVO"</span>, <span class="s2">"SUSPENDIDO"</span>, <span class="s2">"BAJA"</span>]}},
+    {<span class="k">"name"</span>: <span class="s2">"mcc"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>},
+    {<span class="k">"name"</span>: <span class="s2">"limiteDiario"</span>, <span class="k">"type"</span>: <span class="s2">"long"</span>, <span class="k">"default"</span>: 0},
+    {<span class="k">"name"</span>: <span class="s2">"version"</span>, <span class="k">"type"</span>: <span class="s2">"long"</span>},
+    {<span class="k">"name"</span>: <span class="s2">"actualizadoEn"</span>, <span class="k">"type"</span>: {<span class="k">"type"</span>: <span class="s2">"long"</span>,
+       <span class="k">"logicalType"</span>: <span class="s2">"timestamp-millis"</span>}},
+    {<span class="k">"name"</span>: <span class="s2">"canal"</span>, <span class="k">"type"</span>: [<span class="s2">"null"</span>, <span class="s2">"string"</span>], <span class="k">"default"</span>: null}
+  ]
+}</pre>
+    <div class="tw"><table>
+      <thead><tr><th>Campo</th><th>Rol</th></tr></thead>
+      <tbody>
+        <tr><td><code>merchantId</code></td><td>Identidad y clave de Kafka: la compactación conserva la última ficha por comercio.</td></tr>
+        <tr><td><code>estado</code></td><td>Lo que Autorización necesita para aprobar o negar. Obligatorio, sin default.</td></tr>
+        <tr><td><code>mcc</code></td><td>Categoría del comercio, usada por reglas de autorización y antifraude.</td></tr>
+        <tr><td><code>limiteDiario</code></td><td>Tope de monto; default 0.</td></tr>
+        <tr><td><code>version</code></td><td>Secuencia creciente: una ficha tardía no pisa una más reciente.</td></tr>
+        <tr><td><code>actualizadoEn</code></td><td>Momento del cambio; permite medir la frescura de la copia.</td></tr>
+        <tr><td><code>canal</code></td><td>Opcional con default <code>null</code>: el ejemplo de evolución que sí se acepta.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card warn"><h3>Baja = tombstone</h3><p>La baja definitiva se publica con valor nulo para la clave <code>merchantId</code>; el broker purga el historial de ese comercio en la compactación.</p></div>
+    <div class="card ochre"><h3>Qué nunca viaja</h3><p>Datos PCI: <b>nunca un PAN</b>. Los datos personales (PII) del representante legal quedan en Comercios; el contrato solo lleva lo necesario para decidir.</p></div>
+  </div>
+</section>
+
+<!-- I · COMPATIBILIDAD -->
+<section class="s compact" id="i-compat" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Contrato · Política de compatibilidad</div>
+  <h2>FULL_TRANSITIVE, porque el tópico se relee desde el offset 0</h2>
+  <p class="muted">Un consumidor nuevo reconstruye su copia leyendo fichas escritas con <i>todas</i> las versiones del esquema. Por eso la compatibilidad no se verifica solo contra la versión anterior.</p>
+  <div class="compat-options">
+    <article class="compat-card"><span class="tag amber">Hacia atrás</span><h3>BACKWARD</h3><div class="compat-rule">lector nuevo ← datos viejos</div><p>El consumidor actualizado lee fichas viejas.</p></article>
+    <article class="compat-card"><span class="tag amber">Hacia adelante</span><h3>FORWARD</h3><div class="compat-rule">lector viejo ← datos nuevos</div><p>El consumidor sin actualizar lee fichas nuevas.</p></article>
+    <article class="compat-card"><span class="tag amber">Ambos</span><h3>FULL</h3><div class="compat-rule">BACKWARD + FORWARD</div><p>Solo contra la versión inmediatamente anterior.</p></article>
+    <article class="compat-card selected"><span class="tag green">Seleccionada</span><h3>FULL_TRANSITIVE</h3><div class="compat-rule">FULL × todo el historial</div><p>Productor y consumidores despliegan en cualquier orden y el reproceso desde 0 es seguro.</p></article>
+  </div>
+</section>
+
+<!-- I · LABORATORIO -->
+<section class="s compact" id="i-lab" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Contrato · Cómo protege a los consumidores</div>
+  <h2>Laboratorio: ¿qué cambio deja pasar Apicurio?</h2>
+  <p class="muted">Elija un cambio candidato. El GP lo envía al Registry antes de publicar; si la regla falla, Apicurio responde 409 y nada llega a <code>estado-comercio</code>.</p>
+  <div class="lab">
+    <div class="opts" id="labOpts">
+      <button class="btn on" type="button" data-c="0">Un junior quita <code>estado</code></button>
+      <button class="btn" type="button" data-c="1">Agregar <code>canal</code> opcional</button>
+      <button class="btn" type="button" data-c="2">Cambiar <code>mcc</code> de string a int</button>
+      <button class="btn" type="button" data-c="3">Renombrar <code>limiteDiario</code> a <code>limite</code></button>
+    </div>
+    <div>
+      <pre id="labCode" style="min-height:8.5rem"></pre>
+      <div class="verdict no" id="labVerdict"><span class="http" id="labHttp">409</span><div><p id="labWhy"></p><div class="checks" id="labChecks"></div></div></div>
+    </div>
+  </div>
+  <div class="callout g"><h3>La protección en una frase</h3><p>El Registry es la barrera técnica: el GP no obtiene un ID de esquema para un cambio incompatible, el productor no puede serializar y Autorización, Antifraude y Liquidación siguen leyendo fichas válidas.</p></div>
+</section>
+
+<!-- I · GOBIERNO Y LÍMITES -->
+<section class="s compact" id="i-gobierno" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Contrato · Gobierno y límites</div>
+  <h2>Quién responde por el contrato y dónde deja de servir</h2>
+  <div class="grid four">
+    <div class="card"><h3>Dueño</h3><p>El equipo Comercios es el único escritor y dueño del contrato.</p></div>
+    <div class="card"><h3>SLO de latencia</h3><p>Tiempo máximo entre el cambio en Comercios y su llegada a la copia local, medido con <code>actualizadoEn</code>.</p></div>
+    <div class="card"><h3>PII y PCI</h3><p>Clasificación de cada campo; un PAN nunca entra al contrato.</p></div>
+    <div class="card"><h3>Cambio disruptivo</h3><p>Producción dual v1/v2 en tópicos paralelos hasta que migran todos los consumidores; luego se retira v1.</p></div>
+  </div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card accent"><span class="tag green">Aceptable aquí</span><h3>Consistencia eventual</h3><p>Autorización decide con la última ficha recibida. Una ficha que llega segundos tarde es aceptable para el MCC o el límite diario, y es mejor que dejar de autorizar cuando Comercios no responde.</p></div>
+    <div class="card warn"><span class="tag red">Cuándo cambia</span><h3>Bloqueo por fraude</h3><p>Un bloqueo urgente no puede esperar la propagación. Para ese caso hay que justificar otro mecanismo (por ejemplo, un comando prioritario o una verificación sincrónica acotada) en lugar de depender del SLO del stream.</p></div>
+  </div>
+</section>
+
+<!-- II · DIAGNÓSTICO -->
+<section class="s" id="ii" data-group="ii">
+  <div class="kicker"><span class="sec">II</span>Reestructuración socio-técnica · Conway inversa <span class="pts">10 pts</span></div>
+  <h2>La arquitectura de Redeban copia sus traspasos</h2>
+  <p class="muted" style="margin-bottom:1rem">Diagnóstico con base en el mapa de fricciones de la Entrega 1.</p>
+  <div class="grid two">
+    <div class="card warn"><span class="tag red">F1</span><h3>Proveedor tercerizado</h3><p>Controla EKS, bases de datos, permisos y despliegues. Todo pasa por un ticket.</p></div>
+    <div class="card warn"><span class="tag red">F4</span><h3>Equipo de API Connect</h3><p>Controla credenciales y publicación de APIs.</p></div>
+    <div class="card warn"><span class="tag red">F3</span><h3>Seguridad al final</h3><p>Revisa al final y rechaza tarde.</p></div>
+    <div class="card warn"><span class="tag red">F2</span><h3>Pipelines copiados</h3><p>Cada repositorio copia y modifica su propio pipeline.</p></div>
+  </div>
+  <div class="callout"><h3>La maniobra</h3><p>Si los equipos están organizados alrededor de tickets, la arquitectura queda organizada alrededor de tickets. Primero diseñamos los equipos que producen la arquitectura que queremos: dominios dueños de su servicio y su stream, y una plataforma que entrega autoservicio.</p></div>
+</section>
+
+<!-- II · TOPOLOGÍAS -->
+<section class="s compact" id="ii-topo" data-group="ii">
+  <div class="kicker"><span class="sec">II</span>Conway inversa · Cuatro topologías, sin híbridos</div>
+  <h2>Nueva estructura de equipos</h2>
+  <div class="topo">
+    <div class="card sa"><span class="tag">Stream-aligned</span><h3>Dominios de negocio</h3><div class="teams">Comercios · Autorización · Liquidación · Canales</div><p>Dueños de su servicio, su base, su API y su stream.</p></div>
+    <div class="card pl"><span class="tag">Platform</span><h3>Plataforma IDP</h3><div class="teams">Backstage · Crossplane · Argo CD + sub-equipo API y Eventos</div><p>Entrega autoservicio. Absorbe al equipo de API Connect.</p></div>
+    <div class="card en"><span class="tag">Enabling</span><h3>Facilitadores temporales</h3><div class="teams">Seguridad/DevSecOps · Contratos de datos (temporal)</div><p>Facilitan capacidades y se extinguen cuando los equipos son autónomos.</p></div>
+    <div class="card cs"><span class="tag">Complicated-subsystem</span><h3>Motor de scoring antifraude</h3><div class="teams">Especialistas</div><p>Complejidad matemática que no conviene repartir entre los streams.</p></div>
+  </div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card"><h3>Proveedor</h3><p>Queda <b>debajo</b> de la plataforma como primitivo auditado: los equipos ya no le abren tickets.</p></div>
+    <div class="card"><h3>Regla de propiedad</h3><p>Cada activo (servicio, base, API, tópico, esquema) tiene <b>un solo</b> equipo dueño.</p></div>
+  </div>
+</section>
+
+<!-- II · HANDOFFS -->
+<section class="s compact" id="ii-handoffs" data-group="ii">
+  <div class="kicker"><span class="sec">II</span>Conway inversa · Handoffs eliminados</div>
+  <h2>Cada traspaso tiene un reemplazo de autoservicio</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Fricción</th><th>Handoff hoy</th><th>Reemplazo</th><th>Equipo dueño</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag red">F1</span></td><td>Ticket al proveedor</td><td><b>GP1</b>: microservicio + PostgreSQL en ~10 minutos</td><td>Platform</td></tr>
+      <tr><td><span class="tag red">F4</span></td><td>Ticket de credenciales</td><td>Suscripción en autoservicio (<b>GP2</b>)</td><td>Platform · sub-equipo API y Eventos</td></tr>
+      <tr><td><span class="tag red">F3</span></td><td>Cambios por consola</td><td>Reconciliación GitOps</td><td>Platform</td></tr>
+      <tr><td><span class="tag amber">Eventos</span></td><td>Coordinación manual de esquemas</td><td>Registro con FULL_TRANSITIVE</td><td>Stream productor + Registry</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- II · DINÁMICAS -->
+<section class="s" id="ii-dinamicas" data-group="ii">
+  <div class="kicker"><span class="sec">II</span>Dinámicas de interacción <span class="pts">10 pts</span></div>
+  <h2>De Colaboración a X-as-a-Service a medida que madura GP2</h2>
+  <div class="stage-bar" id="stageBar">
+    <button class="btn amberon on" type="button" data-st="0">Meses 0–3</button>
+    <button class="btn amberon" type="button" data-st="1">Meses 3–6</button>
+    <button class="btn amberon" type="button" data-st="2">Meses 6+</button>
+  </div>
+  <figure style="margin-top:0"><svg class="tl-svg" viewBox="0 0 1000 230" role="img" aria-label="Modo de interacción entre Platform, Stream-aligned y Enabling según la etapa">
+    <rect class="box" id="tPlat" x="300" y="40" width="240" height="110" rx="4" fill="#5C8FB0" fill-opacity=".18" stroke="#5C8FB0" stroke-width="2"/>
+    <rect class="box" id="tStr" x="440" y="40" width="240" height="110" rx="4" fill="#E7B76A" fill-opacity=".22" stroke="#C99645" stroke-width="2"/>
+    <rect class="box" id="tEna" x="40" y="40" width="160" height="110" rx="4" fill="#9A79B8" fill-opacity=".18" stroke="#9A79B8" stroke-width="2"/>
+    <text class="hd" id="tPlatL" x="370" y="80">Platform</text>
+    <text class="hd" id="tStrL" x="610" y="80">Comercios</text>
+    <text class="hd" id="tEnaL" x="120" y="80">Enabling</text>
+    <text class="t2" id="tEnaS" x="120" y="102">contratos de datos</text>
+    <line id="tXaaS" x1="660" y1="40" x2="660" y2="150" stroke="#1C1B19" stroke-width="5" opacity="0"/>
+    <path id="tFac" d="M200 95H290" stroke="#9A79B8" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+    <text class="mode-lbl" id="tMode" x="500" y="195">Colaboración</text>
+    <text class="t2" id="tModeS" x="500" y="215">diseño conjunto del primer productor</text>
+  </svg></figure>
+  <div class="walk" id="stageWalk">
+    <div class="lbl" id="sLbl">Meses 0–3</div>
+    <h3 id="sTitle"></h3>
+    <div class="grid two" style="margin-top:.5rem">
+      <div><p class="muted" style="font-size:.85rem">Platform ↔ Stream-aligned</p><p id="sPS"></p></div>
+      <div><p class="muted" style="font-size:.85rem">Enabling ↔ Streams</p><p id="sES"></p></div>
+    </div>
+  </div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card accent"><h3>Criterio de salida</h3><p>Por ejemplo: tres equipos integrados sin intervención de la plataforma. Cumplido, la interacción pasa a X-as-a-Service.</p></div>
+    <div class="card warn"><h3>Señal de retroceso</h3><p>Si la colaboración se vuelve permanente, falta una capacidad en la plataforma: se convierte en ítem de roadmap, no en soporte continuo.</p></div>
+  </div>
+</section>
+
+<!-- III · LIDERAZGO Y 80/20 -->
+<section class="s" id="iii" data-group="iii">
+  <div class="kicker"><span class="sec">III</span>Plataforma como producto · Liderazgo dual y 80/20 <span class="pts">15 pts</span></div>
+  <h2>Two-in-a-Box: producto e ingeniería deciden juntos</h2>
+  <div class="grid two">
+    <div class="card ochre"><span class="tag amber">PPM · producto</span><h3>¿Vale la pena?</h3><ul class="clean"><li>Viabilidad y ROI.</li><li>Deseabilidad: escucha a los equipos stream-aligned.</li><li>Negocia con Seguridad y Cumplimiento.</li></ul></div>
+    <div class="card accent"><span class="tag green">TL/EM · ingeniería</span><h3>¿Se puede y es confiable?</h3><ul class="clean g"><li>Factibilidad técnica.</li><li>Confiabilidad de la plataforma.</li><li>Políticas como código.</li></ul></div>
+  </div>
+  <h3 style="margin-top:1.6rem">Golden Paths oficiales: el 20 % que cubre el 80 %</h3>
+  <div class="grid two">
+    <div class="card accent"><span class="tag green">GP1 · desde el P1</span><h3>Microservicio + PostgreSQL</h3><p>Formulario → servicio corriendo en ~10 minutos.</p></div>
+    <div class="card accent"><span class="tag green">GP2 · nuevo</span><h3>Stream ECST</h3><p><b>Publicador</b>: tópico, contrato, escritor único y repo.<br><b>Suscriptor</b>: suscripción de solo lectura y repo de materialización.</p></div>
+  </div>
+  <div class="callout"><h3>Fuera este trimestre</h3><p>Onboarding de APIs en API Connect (Ola 2), bases no relacionales, clústeres nuevos, colas propietarias y AI Gateway.</p></div>
+</section>
+
+<!-- III · ATÍPICOS -->
+<section class="s compact" id="iii-atipicos" data-group="iii">
+  <div class="kicker"><span class="sec">III</span>Plataforma como producto · Política de casos atípicos</div>
+  <h2>Salir del camino está permitido; hacerlo gratis, no</h2>
+  <div class="card" style="max-width:820px">
+    <p>Un equipo puede salir del Golden Path sin penalización cuando su caso no encaja. A cambio, asume la operación y el on-call de lo que construye, y cumple los guardarraíles mínimos: contrato registrado, políticas aplicadas y entrada en el catálogo. La plataforma no da soporte a lo que no ofrece.</p>
+    <p>Cuando tres o más equipos piden lo mismo, la necesidad deja de ser atípica y entra al roadmap como RFC, priorizada por el PPM con el mismo análisis de valor que cualquier otra capacidad.</p>
+  </div>
+  <div class="callout g"><h3>Vías de escape</h3><p>Acceso directo a Kubernetes y a las APIs nativas. Si el portal cae, los equipos siguen trabajando con Git.</p></div>
+</section>
+
+<!-- III · INNERSOURCING -->
+<section class="s compact" id="iii-inner" data-group="iii">
+  <div class="kicker"><span class="sec">III</span>Plataforma como producto · InnerSourcing</div>
+  <h2>Los streams aportan plantillas sin convertir a la plataforma en cuello de botella</h2>
+  <ol class="steps">
+    <li><b>1. Repositorio abierto</b>Plantillas con <code>CONTRIBUTING.md</code> y estándares de cobertura.</li>
+    <li><b>2. RFC previo</b>Obligatorio para contribuciones grandes.</li>
+    <li><b>3. Checks automáticos</b>Pruebas, políticas y compatibilidad del esquema antes de la revisión humana.</li>
+    <li><b>4. Dos niveles</b><i>Comunitaria</i>: la mantiene su autor. <i>Oficial</i>: la adopta la plataforma.</li>
+  </ol>
+  <div class="tw" style="margin-top:1.2rem"><table>
+    <thead><tr><th>Si falla…</th><th>Responde (on-call)</th><th>Cómo se sabe</th></tr></thead>
+    <tbody>
+      <tr><td>Una plantilla comunitaria</td><td>El equipo que la aportó</td><td><code>CODEOWNERS</code></td></tr>
+      <tr><td>El núcleo de la plataforma</td><td>La guardia central de Platform</td><td>Rotación de Platform</td></tr>
+      <tr><td>Una plantilla sin mantenimiento</td><td>Nadie: se depreca</td><td>Política de deprecación</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- III · ROI -->
+<section class="s" id="iii-roi" data-group="iii">
+  <div class="kicker"><span class="sec">III</span>Tablero de valor · ROI <span class="pts">15 pts</span></div>
+  <h2>Calculadora de ROI para la junta directiva</h2>
+  <p class="muted" style="margin-bottom:1rem">Todos los supuestos son editables y están marcados como <span class="est">ESTIMACIÓN</span>. Los tiempos de espera provienen del P1 (3–4 días → 10 min; 12–16 días en serie → 10 min; apagado de desarrollo ≈ 66 % de horas de cómputo).</p>
+  <div class="calc">
+    <div class="inputs" id="roiInputs">
+      <h3>Esperas eliminadas</h3>
+      <div class="fld"><label>Solicitudes por año<span class="est">EST</span></label><input type="number" id="rReq" value="240"></div>
+      <div class="fld"><label>Días de espera evitados<small>P1: 3–4 días → 10 min</small></label><input type="number" id="rDays" value="3.5" step="0.5"></div>
+      <div class="fld"><label>Horas por día<span class="est">EST</span></label><input type="number" id="rHpd" value="8"></div>
+      <div class="fld"><label>Ingenieros bloqueados<span class="est">EST</span></label><input type="number" id="rEng" value="1" step="0.5"></div>
+      <div class="fld"><label>Costo por hora (USD)<span class="est">EST</span></label><input type="number" id="rCph" value="25"></div>
+      <h3>Cost of Delay</h3>
+      <div class="fld"><label>Servicios nuevos por año<span class="est">EST</span></label><input type="number" id="rSvc" value="20"></div>
+      <div class="fld"><label>Días ganados por servicio<small>P1: 12–16 días en serie</small></label><input type="number" id="rSvcD" value="12"></div>
+      <div class="fld"><label>Costo de demora por día (USD)<span class="est">EST</span></label><input type="number" id="rCod" value="600"></div>
+      <h3>API Connect y ambientes</h3>
+      <div class="fld"><label>Ahorro en API Connect (USD/año)<span class="est">EST</span><small>capacidad y tickets de credenciales</small></label><input type="number" id="rApi" value="40000"></div>
+      <div class="fld"><label>Cómputo de desarrollo (USD/año)<span class="est">EST</span></label><input type="number" id="rDev" value="60000"></div>
+      <div class="fld"><label>% horas apagadas<small>P1: ≈ 66 %</small></label><input type="number" id="rOff" value="66"></div>
+      <h3>TCO anual</h3>
+      <div class="fld"><label>Equipo de plataforma (USD/año)<span class="est">EST</span></label><input type="number" id="rTeam" value="240000"></div>
+      <div class="fld"><label>Nube (USD/año)<span class="est">EST</span></label><input type="number" id="rCloud" value="36000"></div>
+      <div class="fld"><label>Licencias (USD/año)<span class="est">EST</span><small>stack OSS</small></label><input type="number" id="rLic" value="12000"></div>
+    </div>
+    <div>
+      <div class="kpis">
+        <div class="kpi g"><span>Ahorro anual</span><b id="oSave">–</b></div>
+        <div class="kpi r"><span>TCO anual</span><b id="oTco">–</b></div>
+        <div class="kpi g" id="oRoiK"><span>ROI anual</span><b id="oRoi">–</b></div>
+        <div class="kpi g" id="oPctK"><span>ROI %</span><b id="oPct">–</b></div>
+      </div>
+      <div class="bars" id="oBars"></div>
+      <div class="formula">Ahorro anual = Esperas + Cost of Delay evitado
+             + Ahorro API Connect + Apagado de ambientes
+Esperas      = solicitudes/año × días evitados × horas/día
+               × ingenieros bloqueados × costo/hora
+ROI anual    = Ahorro anual − TCO anual
+ROI %        = ROI anual / TCO anual</div>
+    </div>
+  </div>
+</section>
+
+<!-- III · DORA / SPACE -->
+<section class="s compact" id="iii-metricas" data-group="iii">
+  <div class="kicker"><span class="sec">III</span>Tablero de valor · DORA, SPACE y DevEx</div>
+  <h2>Qué medimos y a qué nivel</h2>
+  <div class="row" data-tabs="met">
+    <button class="btn amberon on" type="button" data-tab="dora">DORA</button>
+    <button class="btn amberon" type="button" data-tab="space">SPACE</button>
+    <button class="btn amberon" type="button" data-tab="devex">DevEx y producto</button>
+  </div>
+  <div data-views="met">
+    <div class="view on" data-view="dora"><div class="tw"><table>
+      <thead><tr><th>Métrica</th><th>Tipo</th><th>Dato</th></tr></thead>
+      <tbody>
+        <tr><td>Lead Time for Changes</td><td><span class="tag">Lagging</span></td><td>Del commit a producción</td></tr>
+        <tr><td>Change Failure Rate</td><td><span class="tag">Lagging</span></td><td>Despliegues con rollback</td></tr>
+        <tr><td>MTTR</td><td><span class="tag">Lagging</span></td><td>Tiempo de restauración</td></tr>
+        <tr><td>Tiempo de aprovisionamiento</td><td><span class="tag green">Leading</span></td><td>Plantilla ~1 min 24 s; RDS ~5 min</td></tr>
+        <tr><td>% de despliegues automatizados</td><td><span class="tag green">Leading</span></td><td>Automatizados frente a manuales</td></tr>
+        <tr><td>Esquemas rechazados en CI</td><td><span class="tag green">Leading</span></td><td>Enlaza con la <a href="#i-lab">Sección I</a></td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Las lagging confirman el resultado cuando ya ocurrió; las leading se mueven antes y permiten corregir el rumbo dentro del trimestre.</p></div>
+    <div class="view" data-view="space"><div class="tw"><table>
+      <thead><tr><th>Dimensión</th><th>Métrica</th><th>Nivel</th></tr></thead>
+      <tbody>
+        <tr><td>Satisfacción</td><td>Encuesta DevEx, eNPS de la plataforma</td><td>Equipo</td></tr>
+        <tr><td>Rendimiento</td><td>Lead time, éxito en despliegues</td><td>Sistema</td></tr>
+        <tr><td>Actividad</td><td>Despliegues agregados</td><td>Sistema</td></tr>
+        <tr><td>Comunicación</td><td>PR stale time de contribuciones</td><td>Equipo</td></tr>
+        <tr><td>Eficiencia y flujo</td><td>Handoffs por cambio, focus hours</td><td>Equipo</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Se mide por equipo o sistema, <b>nunca por individuo</b>.</p></div>
+    <div class="view" data-view="devex">
+      <div class="grid three">
+        <div class="card"><h3>Estado de flujo</h3><p>Focus hours sin interrupciones por tickets o esperas.</p></div>
+        <div class="card"><h3>Carga cognitiva</h3><p>Conceptos que el desarrollador debe dominar para entregar un cambio.</p></div>
+        <div class="card"><h3>Bucles de retroalimentación</h3><p>Del commit a la señal: CI, Registry, despliegue.</p></div>
+      </div>
+      <div class="callout g"><h3>KPI de producto</h3><p><b>Adopción voluntaria</b> = equipos en el paved path / equipos elegibles, con su curva de adopción; y <b>costo por cambio</b>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- IV · CAPACIDAD -->
+<section class="s" id="iv" data-group="iv">
+  <div class="kicker"><span class="sec">IV</span>Extensión de la PoC · Capacidad de eventos <span class="pts">20 pts</span></div>
+  <h2>Pluggable Message Brokers + Schema Registry, con OSS</h2>
+  <div class="grid two">
+    <div class="card accent"><span class="tag green">Dapr</span><h3>Pluggable Message Brokers</h3><p>El servicio publica a su sidecar en <code>localhost:3500</code>; el broker se declara en un Component. Cambiar Kafka por Redis no toca el código.</p></div>
+    <div class="card ochre"><span class="tag amber">Apicurio Registry 3</span><h3>Schema Registry</h3><p>Guarda el <code>.avsc</code> y aplica FULL_TRANSITIVE. Un cambio incompatible recibe 409.</p></div>
+  </div>
+  <div class="tw" style="margin-top:1.1rem"><table>
+    <thead><tr><th>Dentro del stack</th><th>Fuera de la PoC</th></tr></thead>
+    <tbody><tr><td>kind · Kafka (un nodo, KRaft) · Dapr · Apicurio Registry 3 en memoria · scripts del GP en Python · Makefile · Redis (opcional)</td><td class="muted">Argo CD · Crossplane · Kyverno · Backstage · Kafka UI · Jaeger · Prometheus</td></tr></tbody>
+  </table></div>
+  <div class="callout o"><h3>Estado</h3><p>La PoC está <b>planteada</b>: diseño, Golden Paths y demos definidos. El repositorio de código se crea en la fase F1.</p></div>
+</section>
+
+<!-- IV · GOLDEN PATHS -->
+<section class="s compact" id="iv-gp" data-group="iv">
+  <div class="kicker"><span class="sec">IV</span>PoC · Los dos Golden Paths de GP2</div>
+  <h2>Publicador y suscriptor en un comando cada uno</h2>
+  <div class="grid two">
+    <div class="card accent"><span class="tag green">GP publicador</span><ul class="clean g" style="margin-top:.4rem"><li>Valida <code>owner</code> y <code>cost-center</code>.</li><li>Crea el tópico compactado.</li><li>Registra el <code>.avsc</code> con FULL_TRANSITIVE.</li><li>Aplica el componente de publicación (scopes del productor) y el Deployment con sidecar.</li><li>Genera el repo.</li></ul></div>
+    <div class="card accent"><span class="tag green">GP suscriptor</span><ul class="clean g" style="margin-top:.4rem"><li>Verifica el stream y su esquema.</li><li>Aplica el componente de lectura.</li><li>Crea la suscripción con <code>desde=inicio</code> o <code>nuevos</code>.</li><li>Genera el repo de materialización.</li></ul></div>
+  </div>
+</section>
+
+<!-- IV · ANTES / DESPUÉS -->
+<section class="s compact" id="iv-ba" data-group="iv">
+  <div class="kicker"><span class="sec">IV</span>PoC · Carga cognitiva extrínseca</div>
+  <h2>Antes y después del GP publicador</h2>
+  <div class="row"><button class="btn pri on" type="button" id="baPlay">▶ Reproducir</button><span class="muted" style="font-size:.9rem">Tareas para publicar la ficha del comercio por primera vez. Valores <span class="est">OBJETIVO</span> a medir en F7.</span></div>
+  <div class="ba">
+    <div class="col"><h3>Sin plataforma</h3><ol id="baBefore">
+      <li class="dev"><div>Ticket para crear el tópico</div><span class="who">dev</span></li>
+      <li class="dev"><div>Configurar compactación y particiones</div><span class="who">dev</span></li>
+      <li class="dev"><div>Pedir credenciales SASL/ACL</div><span class="who">dev</span></li>
+      <li class="dev"><div>Registrar el esquema a mano</div><span class="who">dev</span></li>
+      <li class="dev"><div>Configurar productor y serializador Avro</div><span class="who">dev</span></li>
+      <li class="dev"><div>Escribir manifiestos de despliegue</div><span class="who">dev</span></li>
+      <li class="dev"><div>Escribir la lógica del comercio</div><span class="who">dev</span></li>
+    </ol><div class="tot" id="baBT"></div></div>
+    <div class="col"><h3>Con GP publicador</h3><ol id="baAfter">
+      <li class="dev"><div><code>make gp-publicador</code> con owner y cost-center</div><span class="who">dev</span></li>
+      <li class="plat"><div>Tópico compactado creado</div><span class="who">plataforma</span></li>
+      <li class="plat"><div>Esquema registrado con FULL_TRANSITIVE</div><span class="who">plataforma</span></li>
+      <li class="plat"><div>Component Dapr con scopes</div><span class="who">plataforma</span></li>
+      <li class="plat"><div>Deployment con sidecar</div><span class="who">plataforma</span></li>
+      <li class="plat"><div>Repo generado</div><span class="who">plataforma</span></li>
+      <li class="dev"><div>Escribir la lógica del comercio</div><span class="who">dev</span></li>
+    </ol><div class="tot" id="baAT"></div></div>
+  </div>
+  <div class="grid code-pair" style="margin-top:1.2rem">
+    <pre><span class="cm"># Antes: el dev conoce Kafka, Avro y el Registry</span>
+sr = SchemaRegistryClient({<span class="s2">"url"</span>: SR_URL})
+ser = AvroSerializer(sr, open(<span class="s2">"merchant.avsc"</span>).read())
+p = SerializingProducer({
+  <span class="s2">"bootstrap.servers"</span>: BROKERS,
+  <span class="s2">"security.protocol"</span>: <span class="s2">"SASL_SSL"</span>,
+  <span class="s2">"enable.idempotence"</span>: <span class="k">True</span>, <span class="s2">"acks"</span>: <span class="s2">"all"</span>,
+  <span class="s2">"value.serializer"</span>: ser})
+p.produce(<span class="s2">"estado-comercio"</span>, key=m.id, value=m.dict())
+p.flush()</pre>
+    <pre><span class="cm"># Después: el dev habla con su sidecar</span>
+requests.post(
+  <span class="s2">"http://localhost:3500/v1.0/publish/"</span>
+  <span class="s2">"comercios-pubsub/estado-comercio"</span>,
+  params={<span class="s2">"metadata.partitionKey"</span>: m.id},
+  json=m.dict())
+
+<span class="cm"># Kafka, serialización, permisos y esquema
+# los declara el GP en el Component.</span></pre>
+  </div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card accent"><h3>Carga intrínseca · se queda con el dev</h3><p>La lógica del comercio: qué es una ficha válida y cuándo cambia.</p></div>
+    <div class="card warn"><h3>Carga extrínseca · la absorbe la plataforma</h3><p>Kafka, serialización, permisos y esquemas.</p></div>
+  </div>
+</section>
+
+<!-- IV · DEMOS -->
+<section class="s compact" id="iv-demos" data-group="iv">
+  <div class="kicker"><span class="sec">IV</span>PoC · Evidencia</div>
+  <h2>Ocho demos y cómo se mide</h2>
+  <ul class="demos">
+    <li><div><b>GP publicador</b>: recursos creados sin tickets.</div></li>
+    <li><div><b>Código antes y después.</b></div></li>
+    <li><div><b>N fichas publicadas</b>, con CloudEvents visibles.</div></li>
+    <li><div><b>GP suscriptor con desde=inicio</b>: reconstruye el estado.</div></li>
+    <li><div><b>Escritor único</b>: un segundo servicio es rechazado.</div></li>
+    <li><div><b>Esquema incompatible</b>: 409 y el GP se detiene.</div></li>
+    <li class="opt"><div><b>Cambio de broker a Redis</b>, sin tocar código <span class="st">opcional</span></div></li>
+    <li><div><b>ECST en acción</b>: se apaga comercios-api y autorizacion-svc sigue aprobando.</div></li>
+  </ul>
+  <div class="tw" style="margin-top:1.2rem"><table>
+    <thead><tr><th>Medición</th><th>Qué demuestra</th></tr></thead>
+    <tbody>
+      <tr><td>Pasos manuales</td><td>Handoffs que desaparecen</td></tr>
+      <tr><td>Archivos que toca el dev</td><td>Superficie de configuración extrínseca</td></tr>
+      <tr><td>Conceptos que debe conocer</td><td>Carga cognitiva</td></tr>
+      <tr><td>Tiempo hasta el primer evento</td><td>Leading indicator del lead time</td></tr>
+      <tr><td>Llamadas por minuto a comercios-api</td><td>Reducción de carga sincrónica de la Sección I</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card warn"><h3>Limitación declarada</h3><p>Los scopes de Dapr limitan qué app usa un componente, no si lee o escribe. La protección completa requiere ACL de Kafka, como evolución.</p></div>
+    <div class="card ochre"><h3>Plan B del spike</h3><p>Si Dapr no publica Avro con Apicurio, se publica JSON y el GP valida el esquema antes de publicar.</p></div>
+  </div>
+</section>
+
+<!-- PLAN -->
+<section class="s compact" id="plan" data-group="plan">
+  <div class="kicker">Plan de trabajo · Fases</div>
+  <h2>Nueve fases con criterio de aceptación</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Fase</th><th>Sección</th><th>Criterio de aceptación</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>F0 · Entorno y validación del flujo con el compañero de Redeban</td><td>I</td><td><code>make up</code> sin errores; flujo confirmado</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F1 · Infraestructura y spike Dapr + Avro + Apicurio</td><td>IV</td><td>Un evento llega al tópico</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F2 · Servicios</td><td>I, IV</td><td>Una transacción se aprueba con datos locales</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F3 · GP publicador</td><td>IV, III</td><td>Recursos creados con un comando</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F4 · GP suscriptor</td><td>IV, III</td><td>Reconstrucción del estado con desde=inicio</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F5 · Gobierno del contrato</td><td>I</td><td>Esquema sin estado rechazado</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F6 · Secciones II y III en borrador</td><td>II, III</td><td>Tablas y tablero con supuestos</td><td><span class="st">en curso</span></td></tr>
+      <tr><td>F7 · Demos y medición</td><td>IV</td><td><code>make demo-all</code> sin intervención</td><td><span class="st">pendiente</span></td></tr>
+      <tr><td>F8 · Presentación HTML</td><td>Todas</td><td>Ensayo de sustentación</td><td><span class="st">en curso</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card"><h3>Responsables</h3><ul class="clean"><li>I · Diseño orientado a eventos: Daniel</li><li>II · Conway inversa: por asignar</li><li>III · Plataforma como producto: por asignar</li><li>IV · PoC: Daniel</li></ul></div>
+    <div class="card"><h3>Decisiones pendientes</h3><ul class="clean"><li>Responsables de II y III.</li><li>Backstage: ¿fuera de la PoC o formulario opcional?</li><li>Repo de la PoC.</li><li>Confirmar el flujo con el compañero de Redeban.</li><li>Supuestos del ROI: equipos, solicitudes al mes y costo hora.</li></ul></div>
+  </div>
+</section>
+
+<!-- RIESGOS -->
+<section class="s compact" id="plan-riesgos" data-group="plan">
+  <div class="kicker">Plan de trabajo · Riesgos</div>
+  <h2>Riesgos y mitigación</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Riesgo</th><th>Mitigación</th></tr></thead>
+    <tbody>
+      <tr><td>Dapr + Avro + Apicurio no conecta</td><td>Plan B con JSON y validación en el GP</td></tr>
+      <tr><td>Escritor único y solo lectura con scopes</td><td>Declararlo; ACL de Kafka como evolución</td></tr>
+      <tr><td>Flujo de Comercios no validado</td><td>Confirmar antes de F2</td></tr>
+      <tr><td>Secciones II y III sin responsable</td><td>Asignar en la primera reunión</td></tr>
+      <tr><td>Supuestos del ROI sin datos</td><td>Estimaciones marcadas como tales</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- CIERRE -->
+<section class="s" id="cierre" data-group="cierre">
+  <div class="kicker">Cierre</div>
+  <h2>Un mismo caso, cuatro miradas</h2>
+  <div class="grid two">
+    <div class="card accent"><span class="tag green">I</span><h3>El estado viaja</h3><p>Autorización deja de preguntar en cada pago; el contrato y FULL_TRANSITIVE evitan que un cambio rompa a los consumidores.</p></div>
+    <div class="card accent"><span class="tag green">II</span><h3>Los equipos cambian primero</h3><p>Cuatro topologías sin híbridos y una interacción que evoluciona hasta el autoservicio.</p></div>
+    <div class="card accent"><span class="tag green">III</span><h3>La plataforma se gestiona como producto</h3><p>Pocos caminos oficiales, contribución con on-call claro y valor medido en dólares.</p></div>
+    <div class="card accent"><span class="tag green">IV</span><h3>La PoC lo demuestra</h3><p>Dapr y Apicurio quitan la carga extrínseca: el desarrollador conserva solo la lógica del comercio.</p></div>
+  </div>
+  <p class="muted" style="margin-top:2rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase">ARTI-4219 · Proyecto Integrador #2 · Grupo 2 · 2026-20</p>
+</section>
+
+</main>
+
+<script>
+/* ---------- Fondo sutil ---------- */
+(function(){
+  const c=document.getElementById('bg'),x=c.getContext('2d');
+  function draw(){
+    const W=c.width=innerWidth,H=c.height=innerHeight;x.clearRect(0,0,W,H);
+    x.strokeStyle='rgba(28,27,25,.03)';x.lineWidth=1;
+    const n=Math.max(6,Math.round(H/110)),lh=H/n;
+    for(let i=0;i<n;i++){const y=(i+.5)*lh;x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}
+    for(let i=0;i<Math.round(W/80);i++){const y=(Math.floor(Math.random()*n)+.5)*lh;x.fillStyle=Math.random()<.1?'rgba(194,65,31,.08)':'rgba(28,27,25,.04)';x.beginPath();x.arc(Math.random()*W,y,1.5+Math.random(),0,7);x.fill();}
+  }
+  addEventListener('resize',draw);draw();
+})();
+
+/* ---------- Revelado, navegación y progreso ---------- */
+const sections=[...document.querySelectorAll('section.s')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');}),{threshold:.08});
+sections.forEach(s=>io.observe(s));
+const navLinks=[...document.querySelectorAll('#nav a')];
+const spy=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;const g=e.target.dataset.group;navLinks.forEach(a=>a.classList.toggle('on',a.dataset.nav===g));}),{rootMargin:'-45% 0px -50% 0px'});
+sections.forEach(s=>spy.observe(s));
+addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('bar').style.width=Math.min(100,h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});
+
+/* ---------- Pestañas genéricas ---------- */
+document.querySelectorAll('[data-tabs]').forEach(bar=>{
+  const views=document.querySelector(`[data-views="${bar.dataset.tabs}"]`);
+  bar.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+    bar.querySelectorAll('[data-tab]').forEach(o=>o.classList.toggle('on',o===b));
+    views.querySelectorAll('[data-view]').forEach(v=>v.classList.toggle('on',v.dataset.view===b.dataset.tab));
+  }));
+});
+
+const fmt=n=>Math.round(n).toLocaleString('es-CO');
+const usd=n=>(n<0?'−':'')+'US$ '+(Math.abs(n)>=1e6?(Math.abs(n)/1e6).toFixed(2)+' M':Math.round(Math.abs(n)/1000)+' k');
+const big=n=>n>=1e9?(n/1e9).toFixed(1)+' mil M':n>=1e6?(n/1e6).toFixed(1)+' M':n>=1e3?(n/1e3).toFixed(1)+' k':fmt(n);
+const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
+
+/* ---------- Calculadora de carga ---------- */
+(function(){
+  function calc(){
+    const today=val('lTps')*86400, ecst=val('lChg')*Math.max(1,val('lCons'));
+    document.getElementById('lToday').textContent=big(today);
+    document.getElementById('lEcst').textContent=big(ecst);
+    document.getElementById('lRed').textContent=ecst>0?'÷ '+big(today/ecst):'—';
+  }
+  ['lTps','lChg','lCons'].forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
+})();
+
+/* ---------- Calculadora ROI ---------- */
+(function(){
+  const ids=['rReq','rDays','rHpd','rEng','rCph','rSvc','rSvcD','rCod','rApi','rDev','rOff','rTeam','rCloud','rLic'];
+  function calc(){
+    const wait=val('rReq')*val('rDays')*val('rHpd')*val('rEng')*val('rCph');
+    const cod=val('rSvc')*val('rSvcD')*val('rCod');
+    const api=val('rApi');
+    const env=val('rDev')*Math.min(100,val('rOff'))/100;
+    const save=wait+cod+api+env;
+    const team=val('rTeam'),cloud=val('rCloud'),lic=val('rLic'),tco=team+cloud+lic;
+    const roi=save-tco,pct=tco>0?roi/tco*100:0;
+    document.getElementById('oSave').textContent=usd(save);
+    document.getElementById('oTco').textContent=usd(tco);
+    document.getElementById('oRoi').textContent=usd(roi);
+    document.getElementById('oPct').textContent=(tco>0?Math.round(pct)+' %':'—');
+    ['oRoiK','oPctK'].forEach(k=>{const e=document.getElementById(k);e.classList.toggle('g',roi>=0);e.classList.toggle('r',roi<0);});
+    const rows=[['Esperas',wait,0],['Cost of Delay',cod,0],['API Connect',api,0],['Apagado ambientes',env,0],['Equipo plataforma',team,1],['Nube',cloud,1],['Licencias',lic,1]];
+    const mx=Math.max(1,...rows.map(r=>r[1]));
+    document.getElementById('oBars').innerHTML=rows.map(r=>`<div class="brow${r[2]?' cost':''}"><span>${r[0]}</span><div class="tr"><div class="fl" style="width:${r[1]/mx*100}%"></div></div><span class="v">${usd(r[1])}</span></div>`).join('');
+  }
+  ids.forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
+})();
+
+/* ---------- Laboratorio de compatibilidad ---------- */
+(function(){
+  const C=[
+    {code:'<span class="cm">// candidato v2</span>\n{"name": "merchantId", ...},\n<span class="del">{"name": "estado", "type": {"type": "enum", ...}},</span>\n{"name": "mcc", ...}',
+     ok:false,b:true,f:false,why:'<b>FORWARD falla</b>: los consumidores con v1 exigen <code>estado</code> y no tiene default. Apicurio responde 409, el GP se detiene y el evento nunca llega al tópico.'},
+    {code:'<span class="cm">// candidato v2</span>\n...\n{"name": "canal", "type": ["null", "string"],\n <span class="k">"default"</span>: null}',
+     ok:true,b:true,f:true,why:'<b>Compatible en ambos sentidos</b>: un lector viejo ignora <code>canal</code>; un lector nuevo usa <code>null</code> al leer fichas viejas. Apicurio registra la nueva versión.'},
+    {code:'<span class="cm">// candidato v2</span>\n{"name": "mcc", "type": <span class="del">"string"</span> <span class="k">"int"</span>}',
+     ok:false,b:false,f:false,why:'<b>Falla en ambos sentidos</b>: Avro no promueve string a int ni al revés. Ninguna versión puede leer la otra.'},
+    {code:'<span class="cm">// candidato v2</span>\n{"name": <span class="del">"limiteDiario"</span> <span class="k">"limite"</span>,\n "type": "long", "default": 0}',
+     ok:true,b:true,f:true,why:'<b>Pasa el Registry, pero es un cambio silencioso</b>: como hay default, cada lector usa 0 cuando no encuentra su campo. Técnicamente compatible, semánticamente peligroso: lo frena la revisión del dueño (CODEOWNERS), no el Registry.'}
+  ];
+  const btns=[...document.querySelectorAll('#labOpts .btn')];
+  function show(i){
+    const c=C[i];btns.forEach((b,k)=>b.classList.toggle('on',k===i));
+    document.getElementById('labCode').innerHTML=c.code;
+    const v=document.getElementById('labVerdict');v.classList.toggle('no',!c.ok||i===3);
+    document.getElementById('labHttp').textContent=c.ok?'200':'409';
+    document.getElementById('labWhy').innerHTML=c.why;
+    document.getElementById('labChecks').innerHTML=`<span class="tag ${c.b?'green':'red'}">BACKWARD ${c.b?'✓':'✕'}</span><span class="tag ${c.f?'green':'red'}">FORWARD ${c.f?'✓':'✕'}</span><span class="tag ${c.ok?'green':'red'}">TRANSITIVE ${c.ok?'✓':'✕'}</span>`;
+  }
+  btns.forEach((b,i)=>b.addEventListener('click',()=>show(i)));show(0);
+})();
+
+/* ---------- Línea de tiempo de interacción ---------- */
+(function(){
+  const S=[
+    {lbl:'Meses 0–3',t:'Colaboración',sub:'diseño conjunto del primer productor',ps:'Colaboración: Platform y Comercios diseñan juntos el primer productor ECST. Se descubre qué debe automatizar el GP.',es:'Facilitación sobre Avro: el equipo de contratos de datos enseña a modelar el esquema.',plat:300,str:440,xaas:0,ena:1,enaS:'contratos de datos'},
+    {lbl:'Meses 3–6',t:'Facilitación',sub:'adopción del consumidor',ps:'Facilitación: Platform acompaña a Autorización a adoptar el GP suscriptor; ya no construye por él.',es:'Se retira de Comercios: el equipo ya modela sus contratos solo.',plat:240,str:560,xaas:0,ena:.6,enaS:'se retira de Comercios'},
+    {lbl:'Meses 6+',t:'X-as-a-Service',sub:'suscripción y plantilla',ps:'X-as-a-Service: cualquier equipo publica o se suscribe con la plantilla, sin hablar con Platform.',es:'Se extingue: la capacidad quedó en los equipos y en la plataforma.',plat:200,str:700,xaas:1,ena:.15,enaS:'extinguido'}
+  ];
+  const $=id=>document.getElementById(id), btns=[...document.querySelectorAll('#stageBar .btn')];
+  function go(i){
+    const s=S[i];btns.forEach((b,k)=>b.classList.toggle('on',k===i));
+    $('tPlat').setAttribute('x',s.plat);$('tStr').setAttribute('x',s.str);
+    $('tPlatL').setAttribute('x',s.plat+120);$('tStrL').setAttribute('x',s.str+120);
+    $('tXaaS').setAttribute('x1',s.str-10);$('tXaaS').setAttribute('x2',s.str-10);$('tXaaS').style.opacity=s.xaas;
+    $('tStrL').textContent=i===0?'Comercios':i===1?'Autorización':'Todos los streams';
+    $('tMode').textContent=s.t;$('tModeS').textContent=s.sub;
+    ['tEna','tEnaL','tEnaS','tFac'].forEach(k=>$(k).style.opacity=s.ena);$('tEnaS').textContent=s.enaS;
+    $('sLbl').textContent=s.lbl;$('sTitle').textContent=s.t;$('sPS').textContent=s.ps;$('sES').textContent=s.es;
+  }
+  btns.forEach((b,i)=>b.addEventListener('click',()=>go(i)));go(0);
+})();
+
+/* ---------- Antes / después del GP ---------- */
+(function(){
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+  const B=[...document.querySelectorAll('#baBefore li')],A=[...document.querySelectorAll('#baAfter li')];
+  function totals(){
+    const sb=B.filter(l=>l.classList.contains('show')),sa=A.filter(l=>l.classList.contains('show'));
+    document.getElementById('baBT').innerHTML=`Pasos del dev: <b>${sb.filter(l=>l.classList.contains('dev')).length}</b> · tickets: <b>${sb.length?3:0}</b>`;
+    document.getElementById('baAT').innerHTML=`Pasos del dev: <b>${sa.filter(l=>l.classList.contains('dev')).length}</b> · tickets: <b>0</b>`;
+  }
+  let busy=false;
+  async function play(){
+    if(busy)return;busy=true;[...B,...A].forEach(l=>l.classList.remove('show'));totals();
+    for(let i=0;i<Math.max(B.length,A.length);i++){if(B[i])B[i].classList.add('show');if(A[i])A[i].classList.add('show');totals();await wait(420);}
+    busy=false;
+  }
+  document.getElementById('baPlay').addEventListener('click',play);
+  [...B,...A].forEach(l=>l.classList.add('show'));totals();
+})();
+
+/* ---------- Simulador de portada ---------- */
+(function(){
+  const $=id=>document.getElementById(id);
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait=ms=>new Promise(r=>setTimeout(r,reduce?Math.min(ms,120):ms));
+  const pkt=$('pkt'),pktTxt=$('pktTxt'),hint=$('simHint'),nope=$('nopeText');
+  const steps=[...document.querySelectorAll('#simSteps li')];
+  const nodes=['com','dapr','topic','aut','ci','reg','tx'].map(k=>$('n-'+k));
+  const R={ev:$('rEvent'),tp:$('rTopic'),cs:$('rCons'),tx:$('rTx'),cand:$('rCand')};
+  let busy=false,off=false,ver=7,pub=0,rej=0,tx=0;
+  const show=(el,on)=>{el.style.transition='opacity .2s';el.style.opacity=on?1:0;};
+  const place=(x,y)=>pkt.setAttribute('transform',`translate(${x} ${y})`);
+  function focus(n,bad){nodes.forEach(k=>k.classList.remove('on','bad'));if(n)$(n).classList.add(bad?'bad':'on');}
+  function mark(i,bad){steps.forEach((s,k)=>s.className=k<i?'done':k===i?(bad?'bad':'cur'):'');}
+  function reset(){
+    nodes.forEach(n=>n.classList.remove('on','ok','bad'));Object.values(R).forEach(r=>r.classList.remove('on','bad'));
+    steps.forEach(s=>s.className='');pkt.classList.remove('bad');show(pkt,false);show(nope,false);
+    $('regTxt').textContent='historial protegido';$('ciTxt').textContent='esquema v1 vigente';
+    $('n-com').classList.toggle('off',off);
+  }
+  function travel(path,ms=520){return new Promise(res=>{
+    const L=path.getTotalLength(),d=reduce?0:ms,t0=performance.now();
+    (function f(now){const p=d?Math.min(1,(now-t0)/d):1;const pt=path.getPointAtLength(p*L);place(pt.x,pt.y);if(p<1)requestAnimationFrame(f);else res();})(t0);
+  });}
+  async function publish(){
+    if(off){hint.textContent='Comercios está apagado: no hay fichas nuevas, pero Autorización sigue con la última.';return transaction();}
+    reset();ver++;pktTxt.textContent='ficha v'+ver;$('comTxt').textContent='ficha completa · v'+ver;
+    show(pkt,true);place(220,110);focus('n-com');mark(0);
+    hint.textContent='Comercios cambia el límite de un comercio y publica la ficha completa a su sidecar.';
+    R.ev.classList.add('on');await travel(R.ev);
+    focus('n-dapr');mark(1);hint.textContent='El sidecar Dapr serializa en Avro con el esquema registrado.';await wait(600);
+    focus('n-reg');mark(2);$('regTxt').textContent='ID vigente · compatible';hint.textContent='Apicurio guarda el contrato con FULL_TRANSITIVE.';await wait(650);
+    place(470,110);R.tp.classList.add('on');await travel(R.tp);
+    focus('n-topic');mark(3);hint.textContent='La ficha queda en estado-comercio, compactado por merchantId.';await wait(600);
+    place(720,110);R.cs.classList.add('on');await travel(R.cs);
+    focus('n-aut');mark(4);$('autTxt').textContent='copia local · v'+ver;show(pkt,false);
+    hint.textContent='Autorización actualiza su copia local. La próxima transacción no llamará a Comercios.';
+    $('cPub').textContent=++pub;steps.forEach(s=>s.className='done');await wait(500);
+  }
+  async function bad(){
+    reset();pkt.classList.add('bad');pktTxt.textContent='v2 sin estado';show(pkt,true);place(220,235);
+    focus('n-ci');$('ciTxt').textContent='PR: quita estado';hint.textContent='Un junior quita el campo estado y corre el GP publicador.';
+    R.cand.classList.add('bad');await travel(R.cand);
+    focus('n-reg',true);mark(2,true);$('regTxt').textContent='409 · incompatible';
+    hint.textContent='Apicurio responde 409: los lectores v1 exigen estado. El GP se detiene y nada llega al tópico.';
+    show(pkt,false);show(nope,true);$('cRej').textContent=++rej;
+  }
+  async function transaction(){
+    reset();pkt.classList.remove('bad');pktTxt.textContent='pago';show(pkt,true);place(745,205);
+    focus('n-tx');R.tx.classList.add('on');await travel(R.tx,600);
+    focus('n-aut');$('cTx').textContent=++tx;show(pkt,false);
+    hint.textContent=(off?'Comercios está caído, ':'')+'Autorización aprueba con la ficha local v'+ver+': cero llamadas a comercios-api.';
+    $('txTxt').textContent='aprobada con ficha local v'+ver+' · 0 llamadas';
+  }
+  async function run(fn){if(busy)return;busy=true;await fn();busy=false;}
+  $('simPub').onclick=()=>run(publish);
+  $('simBad').onclick=()=>run(bad);
+  $('simOff').onclick=()=>run(async()=>{
+    off=!off;$('simOff').classList.toggle('on',off);$('simOff').textContent=off?'⏻ Encender Comercios':'⏻ Apagar Comercios';
+    reset();if(off){hint.textContent='Comercios cae. Llegan pagos…';await wait(500);await transaction();await wait(700);await transaction();}
+    else hint.textContent='Comercios vuelve y retoma la publicación de fichas.';
+  });
+  setTimeout(()=>run(async()=>{await publish();await wait(400);await transaction();}),800);
+})();
+</script>
+</body>
+</html>
