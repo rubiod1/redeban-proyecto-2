@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#1B2430">
+<meta name="theme-color" content="#2D5C7F">
 <title>Redeban · Proyecto Integrador 2 · De la consulta al estado</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23000'/><path d='M7 9Q32 1 57 9v39q0 8-10 11-10 4-15 4-8 0-15-3Q7 57 7 48z' fill='%23FFF20D'/><path d='M21 49Q24 15 31 7q5 2 9 21 5 24 0 31-3 4-4 5h-6q-1-4 2-7 5-6 1-28-2-13-3-14-3 6-7 34-1 4-2 0z' fill='%23000'/></svg>" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,7 @@
 html{scroll-behavior:smooth;scroll-padding-top:1rem}
 body{
   background-color:var(--paper);
-  background-image:radial-gradient(rgba(27,36,48,.07) 1px, transparent 1px);
+  background-image:radial-gradient(rgba(27,36,48,.075) 1px, transparent 1px);
   background-size:22px 22px;
   color:var(--ink);font-family:'Source Sans 3',system-ui,sans-serif;line-height:1.62;font-size:1.02rem
 }
@@ -46,7 +46,7 @@ section.s.hero > .muted{text-align:center}
 section.s.compact{padding-top:6vh;padding-bottom:6vh}
 
 .kicker{font-family:'JetBrains Mono',monospace;font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
-.sec{display:inline-block;font-family:'Source Serif 4',Georgia,serif;font-weight:700;color:var(--card);background:var(--accent);padding:.02rem .55rem;border-radius:2px;font-size:.95rem;letter-spacing:0}
+.sec{display:inline-block;font-family:'Source Serif 4',Georgia,serif;font-weight:700;color:var(--paper);background:var(--accent);padding:.02rem .55rem;border-radius:2px;font-size:.95rem;letter-spacing:0}
 .pts{font-family:'JetBrains Mono',monospace;font-size:.68rem;border:1px solid var(--ochre);color:var(--ochre);padding:.05rem .45rem;border-radius:2px;letter-spacing:.06em}
 
 h1,h2,h3{font-family:'Source Serif 4',Georgia,serif}
@@ -54,7 +54,7 @@ h1{font-weight:800;line-height:1.02;font-size:clamp(2.5rem,6.4vw,4.9rem);margin-
 h2{font-weight:700;line-height:1.1;font-size:clamp(1.65rem,3.4vw,2.55rem);margin-bottom:1.4rem;letter-spacing:-.01em}
 h3{font-weight:700;font-size:1.1rem;color:var(--ink);margin-bottom:.4rem}
 .strike{color:var(--muted);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:var(--accent)}
-.acc{color:var(--accent);box-shadow:inset 0 -.18em 0 rgba(154,107,47,.18)}
+.acc{color:var(--accent);box-shadow:inset 0 -.18em 0 rgba(45,92,127,.18)}
 p,li{font-size:1.02rem}
 .muted{color:var(--muted)}
 
@@ -147,7 +147,7 @@ details.more p,details.more ul{margin-top:.7rem}
 .nd .body{fill:var(--card);stroke:var(--line);stroke-width:2;transition:stroke .3s,fill .3s}
 .nd.ok .body{stroke:var(--accent2)}
 .nd.on .body{stroke:var(--ink)}
-.nd.bad .body{stroke:var(--accent);fill:#F3EBDD}
+.nd.bad .body{stroke:var(--accent);fill:#E1E8EE}
 .nd.off .body{stroke:var(--muted);fill:var(--soft);stroke-dasharray:5 4}
 .nd.off text{opacity:.45}
 .ring{fill:none;stroke:var(--ochre);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
@@ -261,58 +261,6 @@ details.more p,details.more ul{margin-top:.7rem}
   .index .p{display:none}
 }
 @media (prefers-reduced-motion: reduce){section.s{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
-
-/* ---------- semántica: problema = ochre · solución = acero/salvia ---------- */
-.card.warn{border-left-color:var(--ochre)}
-.tag.red{border-color:var(--ochre);color:var(--ochre)}
-.sb.warn{border-color:var(--ochre);color:var(--ochre)}
-.sb.warn:hover,.sb.warn.on{background:var(--ochre);color:#fff}
-.scenario-step.reject{border-top-color:var(--ochre)}
-.scenario-step.reject::before{background:var(--ochre)}
-.iv-cases .ko{color:var(--ochre)}
-.verdict.no{border-color:var(--ochre)} .verdict.no .http{color:var(--ochre)}
-.nd.bad .body{stroke:var(--ochre);fill:#F3EBDD} .nd.bad .ring{stroke:var(--ochre)}
-.rt.bad{stroke:var(--ochre)} #pkt.bad rect{fill:var(--ochre)}
-.tag.green{border-color:var(--accent2);color:var(--accent2)}
-.tag.amber{border-color:var(--ochre);color:var(--ochre)}
-.sec{background:var(--accent)}
-/* ---------- portada oscura de la última HT ---------- */
-section.s.hero{background:#1B2430;color:#EEF2F5;border-bottom:0;
-  background-image:radial-gradient(rgba(131,171,201,.12) 1px,transparent 1px);background-size:22px 22px}
-section.s.hero h1{color:#FFFFFF}
-section.s.hero .kicker,section.s.hero .muted,section.s.hero .meta span{color:#8E98A0}
-section.s.hero .meta div{border-top-color:#83ABC9}
-section.s.hero .strike{color:#8E98A0;text-decoration-color:#b08854}
-section.s.hero .acc{color:#83ABC9;box-shadow:inset 0 -.18em 0 rgba(131,171,201,.25)}
-section.s.hero .team-meta b{color:#EEF2F5}
-section.s.hero .sim{background:#243143;border-color:#83ABC9;box-shadow:none}
-section.s.hero .sim-hint,section.s.hero .counters{color:#8E98A0}
-section.s.hero .counters b{color:#EEF2F5}
-section.s.hero .sb{color:#EEF2F5;border-color:#83ABC9}
-section.s.hero .sb:hover{background:#2F3D52}
-section.s.hero .sb.pri{background:#83ABC9;color:#1B2430;border-color:#83ABC9}
-section.s.hero .sb.pri:hover{background:#A9CBDF}
-section.s.hero .sb.warn{color:#b08854;border-color:#b08854}
-section.s.hero .sb.warn:hover,section.s.hero .sb.warn.on{background:#b08854;color:#1B2430}
-section.s.hero .sim-svg text{fill:#EEF2F5}
-section.s.hero .sim-svg .t2,section.s.hero .sim-svg .t3{fill:#8E98A0}
-section.s.hero .sim-svg .nd .body{fill:#243143;stroke:#3A4A5E}
-section.s.hero .sim-svg .nd.ok .body{stroke:#7FB593}
-section.s.hero .sim-svg .nd.on .body{stroke:#83ABC9}
-section.s.hero .sim-svg .nd.bad .body{stroke:#b08854;fill:#3A3022}
-section.s.hero .sim-svg .rt{stroke:#3A4A5E}
-section.s.hero .sim-svg .rt.on{stroke:#83ABC9}
-section.s.hero .sim-svg .rt.bad{stroke:#b08854}
-section.s.hero .sim-svg .lk{stroke:#3A4A5E}
-section.s.hero .sim-svg #pkt rect{fill:#83ABC9}
-section.s.hero .sim-svg #pkt.bad rect{fill:#b08854}
-section.s.hero .sim-svg #pkt text{fill:#1B2430}
-section.s.hero .sim-svg #nopeText{fill:#b08854}
-section.s.hero .sim-steps li{color:#8E98A0;border-top-color:#3A4A5E}
-section.s.hero .sim-steps li.done{color:#EEF2F5;border-top-color:#7FB593}
-section.s.hero .sim-steps li.cur{color:#EEF2F5;border-top-color:#83ABC9}
-section.s.hero .sim-steps li.bad{color:#b08854;border-top-color:#b08854}
-section.s.hero .dots{display:none}
 </style>
 </head>
 <body>
@@ -427,11 +375,11 @@ section.s.hero .dots{display:none}
   </div>
   <div data-views="asis">
     <figure class="view on" data-view="hoy"><svg viewBox="0 0 1000 250" role="img" aria-label="Hoy: Autorización consulta comercios-api por API Connect y DataPower en cada transacción" style="font-family:Arial,sans-serif">
-      <defs><marker id="ma" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#9A6B2F"/></marker></defs>
+      <defs><marker id="ma" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#2D5C7F"/></marker></defs>
       <g fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5"><rect x="20" y="70" width="200" height="100" rx="6"/><rect x="290" y="70" width="200" height="100" rx="6"/><rect x="560" y="70" width="180" height="100" rx="6"/><rect x="800" y="70" width="180" height="100" rx="6"/></g>
       <g text-anchor="middle" fill="#1B2430"><text x="120" y="110" font-size="20" font-weight="700">Transacción</text><text x="120" y="138" font-size="14" fill="#5B6670">POS / e-commerce</text><text x="390" y="110" font-size="20" font-weight="700">Autorización</text><text x="390" y="138" font-size="14" fill="#5B6670">¿comercio activo?</text><text x="650" y="110" font-size="18" font-weight="700">API Connect</text><text x="650" y="138" font-size="14" fill="#5B6670">+ DataPower</text><text x="890" y="110" font-size="18" font-weight="700">comercios-api</text><text x="890" y="138" font-size="14" fill="#5B6670">dominio Comercios</text></g>
-      <g stroke="#9A6B2F" stroke-width="2" fill="none" marker-end="url(#ma)"><path d="M220 120H290"/><path d="M490 120H560" stroke-dasharray="7 5"/><path d="M740 120H800" stroke-dasharray="7 5"/></g>
-      <text x="645" y="210" text-anchor="middle" font-size="16" fill="#9A6B2F">1 transacción = 1 consulta sincrónica · si Comercios cae, Autorización no decide</text>
+      <g stroke="#2D5C7F" stroke-width="2" fill="none" marker-end="url(#ma)"><path d="M220 120H290"/><path d="M490 120H560" stroke-dasharray="7 5"/><path d="M740 120H800" stroke-dasharray="7 5"/></g>
+      <text x="645" y="210" text-anchor="middle" font-size="16" fill="#2D5C7F">1 transacción = 1 consulta sincrónica · si Comercios cae, Autorización no decide</text>
       <text x="645" y="45" text-anchor="middle" font-size="14" fill="#5B6670">GET /comercios/{merchantId} en la ruta crítica del pago</text>
     </svg><figcaption><b>AS-IS.</b> La consulta vive en la ruta crítica: latencia, cupo del gateway y disponibilidad de Comercios se suman a cada pago.</figcaption></figure>
     <figure class="view" data-view="ecst"><svg viewBox="0 0 1000 250" role="img" aria-label="Con ECST: Comercios publica la ficha en estado-comercio y Autorización consulta su copia local" style="font-family:Arial,sans-serif">
@@ -967,7 +915,7 @@ requests.post(
     x.strokeStyle='rgba(27,36,48,.03)';x.lineWidth=1;
     const n=Math.max(6,Math.round(H/110)),lh=H/n;
     for(let i=0;i<n;i++){const y=(i+.5)*lh;x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}
-    for(let i=0;i<Math.round(W/80);i++){const y=(Math.floor(Math.random()*n)+.5)*lh;x.fillStyle=Math.random()<.1?'rgba(154,107,47,.08)':'rgba(27,36,48,.04)';x.beginPath();x.arc(Math.random()*W,y,1.5+Math.random(),0,7);x.fill();}
+    for(let i=0;i<Math.round(W/80);i++){const y=(Math.floor(Math.random()*n)+.5)*lh;x.fillStyle=Math.random()<.1?'rgba(45,92,127,.08)':'rgba(27,36,48,.04)';x.beginPath();x.arc(Math.random()*W,y,1.5+Math.random(),0,7);x.fill();}
   }
   addEventListener('resize',draw);draw();
 })();
