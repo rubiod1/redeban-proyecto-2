@@ -621,11 +621,16 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
     <div class="card ochre"><span class="tag amber">PPM · producto</span><h3>¿Vale la pena?</h3><ul class="clean"><li>Viabilidad y ROI.</li><li>Deseabilidad: escucha a los equipos stream-aligned.</li><li>Negocia con Seguridad y Cumplimiento.</li></ul></div>
     <div class="card accent"><span class="tag green">TL/EM · ingeniería</span><h3>¿Se puede y es confiable?</h3><ul class="clean g"><li>Factibilidad técnica.</li><li>Confiabilidad de la plataforma.</li><li>Políticas como código.</li></ul></div>
   </div>
+  <div class="callout g"><h3>Regla de decisión del Two-in-a-Box</h3><p>El PPM prioriza por valor, adopción y Cost of Delay; el TL/EM acepta la solución solo si cumple SLO, seguridad, soporte y costo operativo. Ninguno puede aprobar unilateralmente una excepción: el desacuerdo se escala al comité de producto y arquitectura en cinco días hábiles.</p></div>
   <h3 style="margin-top:1.6rem">Golden Paths oficiales: el 20 % que cubre el 80 %</h3>
-  <div class="grid two">
-    <div class="card accent"><span class="tag green">GP1 · desde el P1</span><h3>Microservicio + PostgreSQL</h3><p>Formulario → servicio corriendo en ~10 minutos.</p></div>
-    <div class="card accent"><span class="tag green">GP2 · nuevo</span><h3>Stream ECST</h3><p><b>Publicador</b>: tópico, contrato, escritor único y repo.<br><b>Suscriptor</b>: suscripción de solo lectura y repo de materialización.</p></div>
-  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Path</th><th>Cubre</th><th>Incluye por defecto</th><th>Éxito medido por</th></tr></thead>
+    <tbody>
+      <tr><td><b>GP1</b><br>Microservicio + PostgreSQL</td><td>Servicios CRUD de dominio</td><td>Repositorio, base, pipeline, observabilidad, secretos y manifiestos GitOps</td><td>Ambiente disponible en ≤10 min y primer despliegue sin ticket</td></tr>
+      <tr><td><b>GP2</b><br>Stream ECST</td><td>Publicar y consumir cambios de Comercios</td><td>Tópico, Avro, FULL_TRANSITIVE, scopes, sidecar Dapr y repo de materialización</td><td>Contrato validado en CI y stream consumible sin coordinación manual</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted" style="margin-top:.7rem;font-size:.92rem"><b>Política de soporte:</b> estos dos paths son la ruta recomendada, documentada y con SLO. Su adopción es voluntaria, pero solo ellos reciben evolución, guardia y soporte de primer nivel de Platform.</p>
   <div class="callout"><h3>Fuera este trimestre</h3><p>Onboarding de APIs en API Connect (Ola 2), bases no relacionales, clústeres nuevos, colas propietarias y AI Gateway.</p></div>
 </section>
 
@@ -634,7 +639,8 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
   <div class="kicker"><span class="sec">III</span>Plataforma como producto · Política de casos atípicos</div>
   <h2>Salir del camino está permitido; hacerlo gratis, no</h2>
   <div class="card" style="max-width:820px">
-    <p>Un equipo puede salir del Golden Path sin penalización cuando su caso no encaja. A cambio, asume la operación y el on-call de lo que construye, y cumple los guardarraíles mínimos: contrato registrado, políticas aplicadas y entrada en el catálogo. La plataforma no da soporte a lo que no ofrece.</p>
+    <p>Un equipo puede salir del Golden Path sin penalización cuando su caso no encaja. Debe registrar un <code>ADR</code> con motivo, alternativas descartadas, costo, riesgo y fecha de revisión; además, asume operación y on-call de lo que construye. Son obligatorios los guardarraíles mínimos: identidad, secretos, observabilidad, contrato registrado, políticas como código y entrada en el catálogo.</p>
+    <p><b>Flujo de excepción:</b> (1) el equipo abre la solicitud en el catálogo; (2) Platform responde en cinco días hábiles si el caso es viable; (3) Seguridad y Cumplimiento revisan solo los riesgos; (4) se aprueba por tiempo limitado, normalmente 90 días; (5) se mide costo y fallas y se decide retirar, mantener como comunitario o convertir en Golden Path. La plataforma no da soporte de producción a lo que no ofrece.</p>
     <p>Cuando tres o más equipos piden lo mismo, la necesidad deja de ser atípica y entra al roadmap como RFC, priorizada por el PPM con el mismo análisis de valor que cualquier otra capacidad.</p>
   </div>
   <div class="callout g"><h3>Vías de escape</h3><p>Acceso directo a Kubernetes y a las APIs nativas. Si el portal cae, los equipos siguen trabajando con Git.</p></div>
@@ -648,14 +654,18 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
     <li><b>1. Repositorio abierto</b>Plantillas con <code>CONTRIBUTING.md</code> y estándares de cobertura.</li>
     <li><b>2. RFC previo</b>Obligatorio para contribuciones grandes.</li>
     <li><b>3. Checks automáticos</b>Pruebas, políticas y compatibilidad del esquema antes de la revisión humana.</li>
-    <li><b>4. Dos niveles</b><i>Comunitaria</i>: la mantiene su autor. <i>Oficial</i>: la adopta la plataforma.</li>
+    <li><b>4. Revisión distribuida</b><code>CODEOWNERS</code> asigna al equipo autor como mantenedor y a Platform como revisor de estándares, no como implementador.</li>
+    <li><b>5. Dos niveles</b><i>Comunitaria</i>: la mantiene su autor. <i>Oficial</i>: la adopta la plataforma con SLO y guardia.</li>
   </ol>
+  <div class="callout"><h3>Contrato de contribución</h3><p>El autor aporta documentación, pruebas, ejemplo ejecutable, owner y presupuesto de soporte. El pipeline publica una vista previa del template para que el equipo consumidor lo pruebe; un pull request aprobado se integra sin esperar una ventana del equipo central. Platform solo puede bloquear por seguridad, incumplimiento de estándares o regresión.</p></div>
   <div class="tw" style="margin-top:1.2rem"><table>
-    <thead><tr><th>Si falla…</th><th>Responde (on-call)</th><th>Cómo se sabe</th></tr></thead>
+    <thead><tr><th>Etapa</th><th>Responsable</th><th>SLA / evidencia</th></tr></thead>
     <tbody>
-      <tr><td>Una plantilla comunitaria</td><td>El equipo que la aportó</td><td><code>CODEOWNERS</code></td></tr>
-      <tr><td>El núcleo de la plataforma</td><td>La guardia central de Platform</td><td>Rotación de Platform</td></tr>
-      <tr><td>Una plantilla sin mantenimiento</td><td>Nadie: se depreca</td><td>Política de deprecación</td></tr>
+      <tr><td>Propuesta y pruebas</td><td>Stream-aligned autor</td><td>CI verde, documentación y owner definidos</td></tr>
+      <tr><td>Compatibilidad y seguridad</td><td>Platform + revisores de dominio</td><td>Revisión en ≤5 días hábiles; bloqueos explícitos</td></tr>
+      <tr><td>Operación comunitaria</td><td>Equipo que la aportó</td><td>On-call, métricas y <code>CODEOWNERS</code></td></tr>
+      <tr><td>Plantilla oficial</td><td>Guardia central de Platform</td><td>SLO, versionado semántico y ruta de migración</td></tr>
+      <tr><td>Sin mantenimiento</td><td>Platform depreca</td><td>Aviso 90 días y alternativa documentada</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -717,26 +727,28 @@ ROI %        = ROI anual / TCO anual</div>
     <div class="view on" data-view="dora"><div class="tw"><table>
       <thead><tr><th>Métrica</th><th>Tipo</th><th>Dato</th></tr></thead>
       <tbody>
+        <tr><td>Deployment Frequency</td><td><span class="tag">Lagging</span></td><td>Despliegues exitosos por servicio y por semana</td></tr>
         <tr><td>Lead Time for Changes</td><td><span class="tag">Lagging</span></td><td>Del commit a producción</td></tr>
         <tr><td>Change Failure Rate</td><td><span class="tag">Lagging</span></td><td>Despliegues con rollback</td></tr>
         <tr><td>MTTR</td><td><span class="tag">Lagging</span></td><td>Tiempo de restauración</td></tr>
         <tr><td>Tiempo de aprovisionamiento</td><td><span class="tag green">Leading</span></td><td>Plantilla ~1 min 24 s; RDS ~5 min</td></tr>
         <tr><td>% de despliegues automatizados</td><td><span class="tag green">Leading</span></td><td>Automatizados frente a manuales</td></tr>
         <tr><td>Esquemas rechazados en CI</td><td><span class="tag green">Leading</span></td><td>Enlaza con la <a href="#i-lab">Sección I</a></td></tr>
+        <tr><td>% de cambios en Golden Path</td><td><span class="tag green">Leading</span></td><td>Uso de GP1/GP2 entre cambios elegibles</td></tr>
       </tbody>
     </table></div>
-    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Las lagging confirman el resultado cuando ya ocurrió; las leading se mueven antes y permiten corregir el rumbo dentro del trimestre.</p></div>
+    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Las lagging confirman el resultado cuando ya ocurrió; las leading se mueven antes y permiten corregir el rumbo dentro del trimestre. El tablero compara cada métrica contra la línea base de P1 y muestra tendencia mensual, no promedios que oculten equipos bloqueados.</p></div>
     <div class="view" data-view="space"><div class="tw"><table>
       <thead><tr><th>Dimensión</th><th>Métrica</th><th>Nivel</th></tr></thead>
       <tbody>
-        <tr><td>Satisfacción</td><td>Encuesta DevEx, eNPS de la plataforma</td><td>Equipo</td></tr>
-        <tr><td>Rendimiento</td><td>Lead time, éxito en despliegues</td><td>Sistema</td></tr>
-        <tr><td>Actividad</td><td>Despliegues agregados</td><td>Sistema</td></tr>
-        <tr><td>Comunicación</td><td>PR stale time de contribuciones</td><td>Equipo</td></tr>
-        <tr><td>Eficiencia y flujo</td><td>Handoffs por cambio, focus hours</td><td>Equipo</td></tr>
+        <tr><td>Satisfacción</td><td>Encuesta DevEx trimestral, eNPS y satisfacción con GP1/GP2</td><td>Equipo</td></tr>
+        <tr><td>Rendimiento</td><td>Lead time, tiempo de aprovisionamiento y éxito en despliegues</td><td>Sistema</td></tr>
+        <tr><td>Actividad</td><td>Despliegues, commits y PRs integrados (nunca como ranking individual)</td><td>Sistema</td></tr>
+        <tr><td>Comunicación y colaboración</td><td>PR stale time, tiempo de respuesta a RFC y contribuciones aceptadas</td><td>Equipo</td></tr>
+        <tr><td>Eficiencia y flujo</td><td>Handoffs por cambio, tiempo en espera, focus hours y carga de soporte</td><td>Equipo</td></tr>
       </tbody>
     </table></div>
-    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Se mide por equipo o sistema, <b>nunca por individuo</b>.</p></div>
+    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Se mide por equipo o sistema, <b>nunca por individuo</b>. Se triangulan señales cuantitativas con una pregunta cualitativa: “¿qué te impidió entregar valor esta semana?”.</p></div>
     <div class="view" data-view="devex">
       <div class="grid three">
         <div class="card"><h3>Estado de flujo</h3><p>Focus hours sin interrupciones por tickets o esperas.</p></div>
@@ -744,6 +756,14 @@ ROI %        = ROI anual / TCO anual</div>
         <div class="card"><h3>Bucles de retroalimentación</h3><p>Del commit a la señal: CI, Registry, despliegue.</p></div>
       </div>
       <div class="callout g"><h3>KPI de producto</h3><p><b>Adopción voluntaria</b> = equipos en el paved path / equipos elegibles, con su curva de adopción; y <b>costo por cambio</b>.</p></div>
+      <div class="tw" style="margin-top:1.1rem"><table>
+        <thead><tr><th>Cadencia</th><th>Audiencia</th><th>Decisión</th></tr></thead>
+        <tbody>
+          <tr><td>Semanal</td><td>Platform y stream-aligned</td><td>Corregir fricciones, fallas y tiempos de espera</td></tr>
+          <tr><td>Mensual</td><td>Comité de producto</td><td>Priorizar roadmap según adopción, costo y riesgo</td></tr>
+          <tr><td>Trimestral</td><td>Junta directiva</td><td>Presentar ROI, tendencia DORA y mejora de DevEx frente a la línea base</td></tr>
+        </tbody>
+      </table></div>
     </div>
   </div>
 </section>
