@@ -673,51 +673,85 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
 <!-- III · ROI -->
 <section class="s" id="iii-roi" data-group="iii">
   <div class="kicker"><span class="sec">III</span>Tablero de valor · ROI <span class="pts">15 pts</span></div>
-  <h2>Calculadora de ROI para la junta directiva</h2>
-  <p class="muted" style="margin-bottom:1rem">Todos los supuestos son editables y están marcados como <span class="est">ESTIMACIÓN</span>. Los tiempos de espera provienen del P1 (3–4 días → 10 min; 12–16 días en serie → 10 min; apagado de desarrollo ≈ 66 % de horas de cómputo).</p>
+  <h2>Valor para la junta: esperas, Cost of Delay y TCO a tres años</h2>
+  <p class="muted" style="margin-bottom:1rem">Las esperas salen del Proyecto 1 (3–4 días por solicitud, 12–16 por servicio nuevo, 1–2 por credencial). Lo demás es <span class="est">ESTIMACIÓN</span> editable. El valor crece por año porque llega con los equipos que eligen el Golden Path.</p>
   <div class="calc">
     <div class="inputs" id="roiInputs">
-      <h3>Esperas eliminadas</h3>
-      <div class="fld"><label>Solicitudes por año<span class="est">EST</span></label><input type="number" id="rReq" value="240"></div>
-      <div class="fld"><label>Días de espera evitados<small>P1: 3–4 días → 10 min</small></label><input type="number" id="rDays" value="3.5" step="0.5"></div>
-      <div class="fld"><label>Horas por día<span class="est">EST</span></label><input type="number" id="rHpd" value="8"></div>
-      <div class="fld"><label>Ingenieros bloqueados<span class="est">EST</span></label><input type="number" id="rEng" value="1" step="0.5"></div>
-      <div class="fld"><label>Costo por hora (USD)<span class="est">EST</span></label><input type="number" id="rCph" value="25"></div>
+      <h3>Esperas eliminadas (F1)</h3>
+      <div class="fld"><label>Solicitudes de infraestructura por año<span class="est">EST</span><small>10 equipos × 2 al mes</small></label><input type="number" id="rReq" value="240"></div>
+      <div class="fld"><label>Días de espera por solicitud<small>Proyecto 1: 3–4 días</small></label><input type="number" id="rDays" value="3.5" step="0.5"></div>
+      <div class="fld"><label>Personas que esperan por solicitud<span class="est">EST</span></label><input type="number" id="rEng" value="2" step="0.5"></div>
+      <div class="fld"><label>% de la espera que se pierde<span class="est">EST</span><small>el resto se usa en otras tareas</small></label><input type="number" id="rBlk" value="50"></div>
+      <div class="fld"><label>Costo por hora cargado (USD)<span class="est">EST</span></label><input type="number" id="rCph" value="25"></div>
+      <div class="fld"><label>Credenciales de API por año<span class="est">EST</span></label><input type="number" id="rCred" value="60"></div>
+      <div class="fld"><label>Días por credencial<small>Proyecto 1: 1–2 días</small></label><input type="number" id="rCredD" value="1.5" step="0.5"></div>
       <h3>Cost of Delay</h3>
       <div class="fld"><label>Servicios nuevos por año<span class="est">EST</span></label><input type="number" id="rSvc" value="20"></div>
-      <div class="fld"><label>Días ganados por servicio<small>P1: 12–16 días en serie</small></label><input type="number" id="rSvcD" value="12"></div>
-      <div class="fld"><label>Costo de demora por día (USD)<span class="est">EST</span></label><input type="number" id="rCod" value="600"></div>
-      <h3>API Connect y ambientes</h3>
-      <div class="fld"><label>Ahorro en API Connect (USD/año)<span class="est">EST</span><small>capacidad y tickets de credenciales</small></label><input type="number" id="rApi" value="40000"></div>
-      <div class="fld"><label>Cómputo de desarrollo (USD/año)<span class="est">EST</span></label><input type="number" id="rDev" value="60000"></div>
-      <div class="fld"><label>% horas apagadas<small>P1: ≈ 66 %</small></label><input type="number" id="rOff" value="66"></div>
+      <div class="fld"><label>Días que cada servicio sale antes<small>Proyecto 1: 12–16 días en serie</small></label><input type="number" id="rSvcD" value="14"></div>
+      <div class="fld"><label>Valor de un día de adelanto (USD)<span class="est">EST</span><small>compárelo con el punto de equilibrio</small></label><input type="number" id="rCod" value="600"></div>
+      <h3>Ambientes (F5)</h3>
+      <div class="fld"><label>Cómputo de desarrollo y pruebas (USD/año)<small>sin dato en el Proyecto 1: no se cuenta</small></label><input type="number" id="rDev" value="0"></div>
+      <div class="fld"><label>% de horas apagadas<small>Proyecto 1: ≈ 66 %</small></label><input type="number" id="rOff" value="66"></div>
+      <h3>Adopción (equipos elegibles)</h3>
+      <div class="fld"><label>Año 1 (%)<span class="est">EST</span><small>TVP con early adopters</small></label><input type="number" id="rA1" value="40"></div>
+      <div class="fld"><label>Año 2 (%)<span class="est">EST</span></label><input type="number" id="rA2" value="75"></div>
+      <div class="fld"><label>Año 3 (%)<span class="est">EST</span></label><input type="number" id="rA3" value="90"></div>
       <h3>TCO anual</h3>
-      <div class="fld"><label>Equipo de plataforma (USD/año)<span class="est">EST</span></label><input type="number" id="rTeam" value="240000"></div>
-      <div class="fld"><label>Nube (USD/año)<span class="est">EST</span></label><input type="number" id="rCloud" value="36000"></div>
-      <div class="fld"><label>Licencias (USD/año)<span class="est">EST</span><small>stack OSS</small></label><input type="number" id="rLic" value="12000"></div>
+      <div class="fld"><label>Personas en el equipo de plataforma<span class="est">EST</span><small>PPM, TL y 2 ingenieros</small></label><input type="number" id="rPpl" value="4"></div>
+      <div class="fld"><label>Personas reasignadas<small>vienen del equipo de API Connect (Sección II): no son costo nuevo</small></label><input type="number" id="rReas" value="2"></div>
+      <div class="fld"><label>Costo anual por persona (USD)<span class="est">EST</span></label><input type="number" id="rCostP" value="60000"></div>
+      <div class="fld"><label>Nube: clúster de gestión, broker y registry (USD/año)<span class="est">EST</span></label><input type="number" id="rCloud" value="36000"></div>
+      <div class="fld"><label>Formación y soporte (USD/año)<span class="est">EST</span><small>stack open source, sin licencias</small></label><input type="number" id="rOther" value="12000"></div>
     </div>
     <div>
       <div class="kpis">
-        <div class="kpi g"><span>Ahorro anual</span><b id="oSave">–</b></div>
-        <div class="kpi r"><span>TCO anual</span><b id="oTco">–</b></div>
-        <div class="kpi g" id="oRoiK"><span>ROI anual</span><b id="oRoi">–</b></div>
-        <div class="kpi g" id="oPctK"><span>ROI %</span><b id="oPct">–</b></div>
+        <div class="kpi g" id="oPayK"><span>Recuperación de la inversión</span><b id="oPay">–</b></div>
+        <div class="kpi g" id="oRoiK"><span>ROI a 3 años</span><b id="oRoi3">–</b></div>
+        <div class="kpi g" id="oNetK"><span>Neto acumulado en 3 años</span><b id="oNet">–</b></div>
+        <div class="kpi"><span>Equilibrio: valor por día de adelanto</span><b id="oBe">–</b></div>
       </div>
-      <div class="bars" id="oBars"></div>
-      <div class="formula">Ahorro anual = Esperas + Cost of Delay evitado
-             + Ahorro API Connect + Apagado de ambientes
-Esperas      = solicitudes/año × días evitados × horas/día
-               × ingenieros bloqueados × costo/hora
-ROI anual    = Ahorro anual − TCO anual
-ROI %        = ROI anual / TCO anual</div>
+      <div class="tw" style="margin-top:.9rem"><table>
+        <thead><tr><th>Año</th><th>Adopción</th><th>Valor (US$)</th><th>TCO (US$)</th><th>Neto (US$)</th><th>Acumulado (US$)</th></tr></thead>
+        <tbody id="oYears"></tbody>
+      </table></div>
+      <div class="bars" id="oBars" style="margin-top:.9rem"></div>
+      <div class="formula">Valor anual  = Esperas + Credenciales + Cost of Delay + Ambientes
+Esperas      = solicitudes × días × 8 h × personas
+               × % perdido × costo/hora
+Cost of Delay = servicios × días de adelanto × valor/día
+Valor año t  = Valor anual × adopción del año t
+TCO          = (personas − reasignadas) × costo/persona
+               + nube + formación
+ROI 3 años   = (Σ valor − 3 × TCO) / (3 × TCO)
+Equilibrio   = valor/día que deja el ROI a 3 años en 0</div>
     </div>
+  </div>
+</section>
+
+<!-- III · ESCENARIOS -->
+<section class="s compact" id="iii-roi-esc" data-group="iii">
+  <div class="kicker"><span class="sec">III</span>Tablero de valor · Escenarios y riesgo</div>
+  <h2>Qué tendría que ser cierto para que la inversión se pague</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Escenario</th><th>Supuestos que cambian</th><th>ROI 3 años</th><th>Recuperación</th><th>Equilibrio (USD/día)</th></tr></thead>
+    <tbody>
+      <tr><td>Conservador</td><td>1 persona espera, 50 % perdido, adelanto a USD 300/día, adopción 30/60/80 %</td><td>−40 %</td><td>Más de 36 meses</td><td>727</td></tr>
+      <tr><td><b>Base</b></td><td>2 personas, 50 % perdido, adelanto a USD 600/día, adopción 40/75/90 %, 2 de 4 personas reasignadas</td><td><b>+40 %</b></td><td><b>Mes 16</b></td><td><b>246</b></td></tr>
+      <tr><td>Optimista</td><td>2 personas, 75 % perdido, adelanto a USD 1.000/día, adopción 50/85/95 %</td><td>+149 %</td><td>Año 1</td><td>Se paga solo con esperas</td></tr>
+      <tr><td>Base · equipo 100 % nuevo</td><td>Las 4 personas de plataforma son contratación nueva</td><td>−18 %</td><td>Más de 36 meses</td><td>873</td></tr>
+      <tr><td>Base · espera 100 % perdida</td><td>Convención del caso de la S14: toda la espera es tiempo perdido</td><td>+112 %</td><td>Año 1</td><td>Se paga solo con esperas</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="callout g"><h3>Lectura para la junta</h3><p>En el escenario base la plataforma se recupera en el <b>mes 16</b> y deja <b>US$ 203 k netos</b> en tres años. La decisión se reduce a una pregunta verificable: <b>¿cada servicio nuevo vale al menos US$ 250 por día que sale antes?</b> Si el equipo de plataforma fuera 100 % contratación nueva, el umbral sube a cerca de US$ 870.</p></div>
+    <div class="callout o"><h3>Riesgo protegido (no se suma al ROI)</h3><p>Con ECST, Autorización deja de depender de que comercios-api responda. En 2024 Redeban procesó 1.169 millones de compras con tarjeta, unas <b>2.200 por minuto</b> en promedio. Hoy cada minuto de caída de Comercios las deja sin decidir. Tampoco se monetiza la capacidad que se libera en API Connect y DataPower (~3,2 M de consultas al día): no hay dato de costo por llamada y no queremos inflar el caso.</p><p class="muted" style="font-size:.8rem;margin-top:.4rem">Fuente: Redeban, Informe de gestión 2024.</p></div>
   </div>
 </section>
 
 <!-- III · DORA / SPACE -->
 <section class="s compact" id="iii-metricas" data-group="iii">
   <div class="kicker"><span class="sec">III</span>Tablero de valor · DORA, SPACE y DevEx</div>
-  <h2>Qué medimos y a qué nivel</h2>
+  <h2>Qué medimos, contra qué línea base y a qué nivel</h2>
   <div class="row" data-tabs="met">
     <button class="btn amberon on" type="button" data-tab="dora">DORA</button>
     <button class="btn amberon" type="button" data-tab="space">SPACE</button>
@@ -725,37 +759,33 @@ ROI %        = ROI anual / TCO anual</div>
   </div>
   <div data-views="met">
     <div class="view on" data-view="dora"><div class="tw"><table>
-      <thead><tr><th>Métrica</th><th>Tipo</th><th>Dato</th></tr></thead>
+      <thead><tr><th>DORA (lagging)</th><th>La anticipa (leading)</th><th>Línea base · Proyecto 1</th><th>Meta</th><th>Cómo se mide</th></tr></thead>
       <tbody>
-        <tr><td>Deployment Frequency</td><td><span class="tag">Lagging</span></td><td>Despliegues exitosos por servicio y por semana</td></tr>
-        <tr><td>Lead Time for Changes</td><td><span class="tag">Lagging</span></td><td>Del commit a producción</td></tr>
-        <tr><td>Change Failure Rate</td><td><span class="tag">Lagging</span></td><td>Despliegues con rollback</td></tr>
-        <tr><td>MTTR</td><td><span class="tag">Lagging</span></td><td>Tiempo de restauración</td></tr>
-        <tr><td>Tiempo de aprovisionamiento</td><td><span class="tag green">Leading</span></td><td>Plantilla ~1 min 24 s; RDS ~5 min</td></tr>
-        <tr><td>% de despliegues automatizados</td><td><span class="tag green">Leading</span></td><td>Automatizados frente a manuales</td></tr>
-        <tr><td>Esquemas rechazados en CI</td><td><span class="tag green">Leading</span></td><td>Enlaza con la <a href="#i-lab">Sección I</a></td></tr>
-        <tr><td>% de cambios en Golden Path</td><td><span class="tag green">Leading</span></td><td>Uso de GP1/GP2 entre cambios elegibles</td></tr>
+        <tr><td><b>Lead Time for Changes</b><br><span class="tag amber">par principal</span></td><td><b>Espera externa por aprovisionamiento</b></td><td>3–4 días por solicitud; 12–16 días por servicio nuevo</td><td>≤ 10 min (medido en el Proyecto 1: plantilla 1 min 24 s, base ≈ 5 min)</td><td>Marcas de tiempo del Golden Path: formulario → Ready</td></tr>
+        <tr><td>Deployment Frequency</td><td>% de cambios elegibles por Golden Path y % de despliegues automatizados</td><td>Despliegues a producción por ticket al proveedor (F1)</td><td>≥ 80 % de los cambios elegibles por GP1/GP2</td><td>Sincronizaciones de Argo CD por servicio y semana</td></tr>
+        <tr><td>Change Failure Rate</td><td>Cambios incompatibles bloqueados antes de producción y drift revertido</td><td>Drift detectado tarde y rollback manual (F3); esquemas sin control (Sección I)</td><td>100 % de los cambios de contrato verificados en la ruta de escritura</td><td>Rechazos 409 del registry y del sidecar; eventos de reconciliación</td></tr>
+        <tr><td>MTTR</td><td>MTTD y MTTA</td><td>Sin dueño visible al que enrutar la alerta (F4)</td><td>100 % de los servicios con dueño en el catálogo</td><td>Alertas enrutadas al owner del catálogo</td></tr>
       </tbody>
     </table></div>
-    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Las lagging confirman el resultado cuando ya ocurrió; las leading se mueven antes y permiten corregir el rumbo dentro del trimestre. El tablero compara cada métrica contra la línea base de P1 y muestra tendencia mensual, no promedios que oculten equipos bloqueados.</p></div>
+    <p class="muted" style="margin-top:.7rem;font-size:.92rem">Las lagging confirman el resultado cuando ya ocurrió; las leading se mueven antes y permiten corregir el rumbo dentro del trimestre. El par principal conecta el tablero con el ROI: la espera que desaparece es la misma que se valoriza en la calculadora. Se muestra la tendencia mensual contra la línea base del Proyecto 1, no promedios que oculten equipos bloqueados.</p></div>
     <div class="view" data-view="space"><div class="tw"><table>
-      <thead><tr><th>Dimensión</th><th>Métrica</th><th>Nivel</th></tr></thead>
+      <thead><tr><th>Dimensión</th><th>Métrica</th><th>Nivel</th><th>Qué carga refleja</th></tr></thead>
       <tbody>
-        <tr><td>Satisfacción</td><td>Encuesta DevEx trimestral, eNPS y satisfacción con GP1/GP2</td><td>Equipo</td></tr>
-        <tr><td>Rendimiento</td><td>Lead time, tiempo de aprovisionamiento y éxito en despliegues</td><td>Sistema</td></tr>
-        <tr><td>Actividad</td><td>Despliegues, commits y PRs integrados (nunca como ranking individual)</td><td>Sistema</td></tr>
-        <tr><td>Comunicación y colaboración</td><td>PR stale time, tiempo de respuesta a RFC y contribuciones aceptadas</td><td>Equipo</td></tr>
-        <tr><td>Eficiencia y flujo</td><td>Handoffs por cambio, tiempo en espera, focus hours y carga de soporte</td><td>Equipo</td></tr>
+        <tr><td>Satisfacción</td><td>Encuesta DevEx trimestral, eNPS y satisfacción con GP1/GP2, con una pregunta fija: ¿qué % de tu semana se fue en trámites de infraestructura?</td><td>Equipo</td><td>Carga extrínseca percibida (F1, F2)</td></tr>
+        <tr><td>Rendimiento</td><td>Lead time, tiempo de aprovisionamiento y éxito en despliegues</td><td>Sistema</td><td>El resultado de quitar esperas y drift (F1, F3)</td></tr>
+        <tr><td>Actividad</td><td>Despliegues, commits y PRs integrados (nunca como ranking individual)</td><td>Sistema</td><td>Contexto, no carga: sin las otras dimensiones no dice nada</td></tr>
+        <tr><td>Comunicación y colaboración</td><td>PR stale time, tiempo de respuesta a RFC y contribuciones aceptadas</td><td>Equipo</td><td>Que contribuir plantillas no traslade la carga al equipo central</td></tr>
+        <tr><td>Eficiencia y flujo</td><td>Handoffs por cambio, tiempo en espera, focus hours y carga de soporte</td><td>Equipo</td><td>Carga extrínseca directa: de 4 tickets a 0 por servicio nuevo (F1)</td></tr>
       </tbody>
     </table></div>
     <p class="muted" style="margin-top:.7rem;font-size:.92rem">Se mide por equipo o sistema, <b>nunca por individuo</b>. Se triangulan señales cuantitativas con una pregunta cualitativa: “¿qué te impidió entregar valor esta semana?”.</p></div>
     <div class="view" data-view="devex">
       <div class="grid three">
-        <div class="card"><h3>Estado de flujo</h3><p>Focus hours sin interrupciones por tickets o esperas.</p></div>
-        <div class="card"><h3>Carga cognitiva</h3><p>Conceptos que el desarrollador debe dominar para entregar un cambio.</p></div>
-        <div class="card"><h3>Bucles de retroalimentación</h3><p>Del commit a la señal: CI, Registry, despliegue.</p></div>
+        <div class="card"><h3>Estado de flujo</h3><p>Focus hours sin interrupciones por tickets o esperas. Línea base: encuesta del primer mes.</p></div>
+        <div class="card"><h3>Carga cognitiva</h3><p>Para publicar un evento, el desarrollador pasa de manejar 6 conceptos (brokers, SASL, serializador Avro, registry, garantías de entrega y manifiestos) a 1: una llamada HTTP a su sidecar (Sección IV).</p></div>
+        <div class="card"><h3>Bucles de retroalimentación</h3><p>Un cambio de contrato incompatible se rechaza en segundos en la ruta de escritura (409 del registry), no días después en producción.</p></div>
       </div>
-      <div class="callout g"><h3>KPI de producto</h3><p><b>Adopción voluntaria</b> = equipos en el paved path / equipos elegibles, con su curva de adopción; y <b>costo por cambio</b>.</p></div>
+      <div class="callout g"><h3>KPI de producto</h3><p><b>Adopción voluntaria</b> = equipos en el paved path / equipos elegibles, con su curva de adopción (la misma que usa la calculadora); y <b>costo por cambio</b> = TCO / cambios exitosos, que baja a medida que crece la adopción.</p></div>
       <div class="tw" style="margin-top:1.1rem"><table>
         <thead><tr><th>Cadencia</th><th>Audiencia</th><th>Decisión</th></tr></thead>
         <tbody>
@@ -978,25 +1008,39 @@ const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
   ['lTps','lChg','lCons'].forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
 })();
 
-/* ---------- Calculadora ROI ---------- */
+/* ---------- Calculadora ROI (3 años con adopción) ---------- */
 (function(){
-  const ids=['rReq','rDays','rHpd','rEng','rCph','rSvc','rSvcD','rCod','rApi','rDev','rOff','rTeam','rCloud','rLic'];
+  const ids=['rReq','rDays','rEng','rBlk','rCph','rCred','rCredD','rSvc','rSvcD','rCod','rDev','rOff','rA1','rA2','rA3','rPpl','rReas','rCostP','rCloud','rOther'];
+  const pct=id=>Math.min(100,val(id))/100;
+  const kk=n=>(n<0?'−':'')+Math.round(Math.abs(n)/1000).toLocaleString('es-CO')+' k';
   function calc(){
-    const wait=val('rReq')*val('rDays')*val('rHpd')*val('rEng')*val('rCph');
-    const cod=val('rSvc')*val('rSvcD')*val('rCod');
-    const api=val('rApi');
-    const env=val('rDev')*Math.min(100,val('rOff'))/100;
-    const save=wait+cod+api+env;
-    const team=val('rTeam'),cloud=val('rCloud'),lic=val('rLic'),tco=team+cloud+lic;
-    const roi=save-tco,pct=tco>0?roi/tco*100:0;
-    document.getElementById('oSave').textContent=usd(save);
-    document.getElementById('oTco').textContent=usd(tco);
-    document.getElementById('oRoi').textContent=usd(roi);
-    document.getElementById('oPct').textContent=(tco>0?Math.round(pct)+' %':'—');
-    ['oRoiK','oPctK'].forEach(k=>{const e=document.getElementById(k);e.classList.toggle('g',roi>=0);e.classList.toggle('r',roi<0);});
-    const rows=[['Esperas',wait,0],['Cost of Delay',cod,0],['API Connect',api,0],['Apagado ambientes',env,0],['Equipo plataforma',team,1],['Nube',cloud,1],['Licencias',lic,1]];
-    const mx=Math.max(1,...rows.map(r=>r[1]));
-    document.getElementById('oBars').innerHTML=rows.map(r=>`<div class="brow${r[2]?' cost':''}"><span>${r[0]}</span><div class="tr"><div class="fl" style="width:${r[1]/mx*100}%"></div></div><span class="v">${usd(r[1])}</span></div>`).join('');
+    const blk=pct('rBlk');
+    const wait=val('rReq')*val('rDays')*8*val('rEng')*val('rCph')*blk;
+    const cred=val('rCred')*val('rCredD')*8*val('rCph')*blk;
+    const svcDays=val('rSvc')*val('rSvcD');
+    const cod=svcDays*val('rCod');
+    const env=val('rDev')*pct('rOff');
+    const value=wait+cred+cod+env;
+    const team=Math.max(0,val('rPpl')-val('rReas'))*val('rCostP'), cloud=val('rCloud'), other=val('rOther');
+    const tco=team+cloud+other;
+    const adop=[pct('rA1'),pct('rA2'),pct('rA3')];
+    let acc=0,pay=null,rows='';
+    adop.forEach((a,i)=>{
+      const v=value*a, net=v-tco, prev=acc; acc+=net;
+      if(pay===null&&acc>=0) pay=net>0?i*12+Math.ceil(12*Math.max(0,-prev)/net):i*12;
+      rows+=`<tr><td>${i+1}</td><td>${Math.round(a*100)} %</td><td>${kk(v)}</td><td>${kk(tco)}</td><td>${kk(net)}</td><td>${kk(acc)}</td></tr>`;
+    });
+    const S=adop.reduce((x,y)=>x+y,0), roi3=tco>0?(value*S-3*tco)/(3*tco)*100:0;
+    const be=svcDays*S>0?(3*tco-(wait+cred+env)*S)/(svcDays*S):0;
+    document.getElementById('oYears').innerHTML=rows;
+    document.getElementById('oPay').textContent=pay===null?'Más de 36 meses':(pay<=12?'Año 1':'Mes '+pay);
+    document.getElementById('oRoi3').textContent=tco>0?(roi3>=0?'+':'−')+Math.abs(Math.round(roi3))+' %':'—';
+    document.getElementById('oNet').textContent=usd(acc);
+    document.getElementById('oBe').textContent=be<=0?'Se paga solo con esperas':'US$ '+Math.round(be).toLocaleString('es-CO')+' /día';
+    [['oPayK',pay!==null],['oRoiK',roi3>=0],['oNetK',acc>=0]].forEach(([k,ok])=>{const e=document.getElementById(k);e.classList.toggle('g',ok);e.classList.toggle('r',!ok);});
+    const bars=[['Esperas',wait,0],['Credenciales',cred,0],['Cost of Delay',cod,0],['Ambientes',env,0],['Equipo (nuevo)',team,1],['Nube',cloud,1],['Formación',other,1]];
+    const mx=Math.max(1,...bars.map(r=>r[1]));
+    document.getElementById('oBars').innerHTML='<p class="muted" style="font-size:.8rem;margin-bottom:.3rem">Valor anual con adopción plena frente a TCO anual</p>'+bars.map(r=>`<div class="brow${r[2]?' cost':''}"><span>${r[0]}</span><div class="tr"><div class="fl" style="width:${r[1]/mx*100}%"></div></div><span class="v">${usd(r[1])}</span></div>`).join('');
   }
   ids.forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
 })();
