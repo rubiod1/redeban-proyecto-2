@@ -271,6 +271,10 @@ section.s.hero > .sim{max-width:1080px}
 html{scroll-padding-top:1rem}
 @media (max-width:900px){.figs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.figs{grid-template-columns:minmax(0,1fr)}}
+.cite{font-family:'JetBrains Mono',monospace;font-size:.7em;vertical-align:super;line-height:0;text-decoration:none;color:var(--accent);margin-left:.12em}
+ol.refs{list-style:none}
+ol.refs li{margin-bottom:.7rem;padding-left:2.2rem;text-indent:-2.2rem;scroll-margin-top:2rem}
+ol.refs li:target{background:var(--soft)}
 </style>
 </head>
 <body>
@@ -304,7 +308,7 @@ html{scroll-padding-top:1rem}
       <g class="nd" id="n-aut"><rect class="ring" x="770" y="60" width="200" height="100" rx="3"/><rect class="body" x="770" y="60" width="200" height="100" rx="3"/><text class="hd" x="870" y="91">autorizacion-svc</text><text class="t2" x="870" y="115" id="autTxt">copia local · v7</text><text class="t3" x="870" y="138">decide sin llamar</text></g>
       <g class="nd" id="n-ci"><rect class="ring" x="20" y="205" width="200" height="60" rx="3"/><rect class="body" x="20" y="205" width="200" height="60" rx="3"/><text class="hd" x="120" y="232">GP · candidato</text><text class="t3" x="120" y="251" id="ciTxt">esquema v1 vigente</text></g>
       <g class="nd" id="n-reg"><rect class="ring" x="270" y="205" width="200" height="60" rx="3"/><rect class="body" x="270" y="205" width="200" height="60" rx="3"/><text class="hd" x="370" y="230">Apicurio Registry</text><text class="t2" x="370" y="247">FULL_TRANSITIVE</text><text class="t3" x="370" y="261" id="regTxt">historial protegido</text></g>
-      <g class="nd" id="n-tx"><rect class="ring" x="520" y="205" width="450" height="60" rx="3"/><rect class="body" x="520" y="205" width="450" height="60" rx="3"/><text class="tp" x="745" y="232">Transacciones POS → autorización</text><text class="t3" x="745" y="251" id="txTxt">0 consultas a comercios-api por transacción</text></g>
+      <g class="nd" id="n-tx"><rect class="ring" x="520" y="205" width="450" height="60" rx="3"/><rect class="body" x="520" y="205" width="450" height="60" rx="3"/><text class="tp" x="745" y="232">Pagos P2M → autorización</text><text class="t3" x="745" y="251" id="txTxt">0 lecturas a la base de Comercios por pago</text></g>
       <text id="nopeText" x="620" y="187" style="opacity:0">409 · el GP se detiene · nada llega al tópico</text>
       <g id="pkt" style="opacity:0"><rect x="-40" y="-12" width="80" height="24" rx="2"/><text id="pktTxt" y="4">ficha</text></g>
     </svg>
@@ -315,10 +319,10 @@ html{scroll-padding-top:1rem}
       <li>estado-comercio</li>
       <li>Copia local</li>
     </ol>
-    <div class="counters"><span>fichas publicadas: <b id="cPub">0</b></span><span>rechazos 409: <b id="cRej">0</b></span><span>transacciones aprobadas: <b id="cTx">0</b></span><span>llamadas a comercios-api: <b>0</b></span></div>
+    <div class="counters"><span>fichas publicadas: <b id="cPub">0</b></span><span>rechazos 409: <b id="cRej">0</b></span><span>pagos aprobados: <b id="cTx">0</b></span><span>lecturas a la base de Comercios: <b>0</b></span></div>
   </div>
   <div class="figs">
-    <div><b>0</b><span>llamadas a comercios-api por transacción en la ruta nominal</span></div>
+    <div><b>0</b><span>lecturas a la base de Comercios por pago P2M en la ruta nominal</span></div>
     <div><b>3–4 días → 10 min</b><span>espera de un servicio nuevo (GP1, Entrega 1)</span></div>
     <div><b>4</b><span>topologías de Team Topologies, sin híbridos</span></div>
     <div><b>409</b><span>cambio incompatible rechazado antes de llegar a Kafka</span></div>
@@ -343,6 +347,7 @@ html{scroll-padding-top:1rem}
     <a href="#iii"><span class="n">III</span><div><h3>La plataforma como producto y métricas</h3><p class="muted">Two-in-a-Box, 80/20, InnerSourcing y tablero DORA/SPACE/ROI</p></div><span class="p">30 pts</span></a>
     <a href="#iv"><span class="n">IV</span><div><h3>Extensión de la PoC</h3><p class="muted">Pluggable Message Brokers con Dapr y Schema Registry con Apicurio</p></div><span class="p">20 pts</span></a>
     <a href="#plan"><span class="n">→</span><div><h3>Plan de trabajo</h3><p class="muted">Fases, responsables, riesgos y decisiones pendientes</p></div></a>
+    <a href="#referencias"><span class="n">→</span><div><h3>Referencias</h3><p class="muted">Fuentes citadas en el documento</p></div></a>
   </div>
 </section>
 
@@ -372,75 +377,97 @@ html{scroll-padding-top:1rem}
 <!-- I · AS-IS / TO-BE -->
 <section class="s" id="i" data-group="i">
   <div class="kicker"><span class="sec">I</span>Diseño orientado a eventos · Migración a ECST <span class="pts">15 pts</span></div>
-  <h2>Cada transacción le pregunta a Comercios lo mismo</h2>
-  <p>Flujo crítico: <b>Comercios → Autorización</b> (y, con el mismo stream, Antifraude y Liquidación). Para aprobar un pago, Autorización necesita saber si el comercio está activo, su MCC y su límite diario.</p>
+  <h2>Cada pago P2M lee la base de otra área</h2>
+  <p>Flujo crítico: <b>Comercios → Autorización</b> en los pagos inmediatos a comercios (<b>P2M</b>), cerca del 45&nbsp;% de los pagos inmediatos. Antes de enviar un pago a autorizar, Redeban valida tres datos del comercio: que esté <b>activo</b>, que <b>pertenezca a la entidad</b> que origina el pago y que los <b>datos del beneficiario</b> coincidan con los registrados.</p>
   <div class="row" data-tabs="asis">
-    <button class="btn amberon on" type="button" data-tab="hoy">Hoy · sincrónico</button>
+    <button class="btn amberon on" type="button" data-tab="hoy">Hoy · base compartida</button>
     <button class="btn amberon" type="button" data-tab="ecst">Con ECST</button>
   </div>
   <div data-views="asis">
-    <figure class="view on" data-view="hoy"><svg viewBox="0 0 1000 250" role="img" aria-label="Hoy: Autorización consulta comercios-api por API Connect y DataPower en cada transacción" style="font-family:Arial,sans-serif">
+    <figure class="view on" data-view="hoy"><svg viewBox="0 0 1000 270" role="img" aria-label="Hoy: Autorización lee directamente la base de Comercios en cada pago P2M; el área operativa la actualiza a partir de tickets del banco adquirente" style="font-family:Arial,sans-serif">
       <defs><marker id="ma" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#2D5C7F"/></marker></defs>
-      <g fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5"><rect x="20" y="70" width="200" height="100" rx="6"/><rect x="290" y="70" width="200" height="100" rx="6"/><rect x="560" y="70" width="180" height="100" rx="6"/><rect x="800" y="70" width="180" height="100" rx="6"/></g>
-      <g text-anchor="middle" fill="#1B2430"><text x="120" y="110" font-size="20" font-weight="700">Transacción</text><text x="120" y="138" font-size="14" fill="#5B6670">POS / e-commerce</text><text x="390" y="110" font-size="20" font-weight="700">Autorización</text><text x="390" y="138" font-size="14" fill="#5B6670">¿comercio activo?</text><text x="650" y="110" font-size="18" font-weight="700">API Connect</text><text x="650" y="138" font-size="14" fill="#5B6670">+ DataPower</text><text x="890" y="110" font-size="18" font-weight="700">comercios-api</text><text x="890" y="138" font-size="14" fill="#5B6670">dominio Comercios</text></g>
-      <g stroke="#2D5C7F" stroke-width="2" fill="none" marker-end="url(#ma)"><path d="M220 120H290"/><path d="M490 120H560" stroke-dasharray="7 5"/><path d="M740 120H800" stroke-dasharray="7 5"/></g>
-      <text x="645" y="210" text-anchor="middle" font-size="16" fill="#2D5C7F">1 transacción = 1 consulta sincrónica · si Comercios cae, Autorización no decide</text>
-      <text x="645" y="45" text-anchor="middle" font-size="14" fill="#5B6670">GET /comercios/{merchantId} en la ruta crítica del pago</text>
-    </svg><figcaption><b>AS-IS.</b> La consulta vive en la ruta crítica: latencia, cupo del gateway y disponibilidad de Comercios se suman a cada pago.</figcaption></figure>
-    <figure class="view" data-view="ecst"><svg viewBox="0 0 1000 250" role="img" aria-label="Con ECST: Comercios publica la ficha en estado-comercio y Autorización consulta su copia local" style="font-family:Arial,sans-serif">
+      <g fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5"><rect x="20" y="60" width="190" height="90" rx="6"/><rect x="270" y="60" width="210" height="90" rx="6"/><rect x="770" y="60" width="210" height="90" rx="6"/><rect x="770" y="180" width="210" height="70" rx="6"/></g>
+      <rect x="540" y="60" width="170" height="90" rx="6" fill="#E1E8EE" stroke="#2D5C7F" stroke-width="2"/>
+      <g text-anchor="middle" fill="#1B2430"><text x="115" y="98" font-size="19" font-weight="700">Pago P2M</text><text x="115" y="124" font-size="13" fill="#5B6670">pago inmediato</text><text x="375" y="98" font-size="19" font-weight="700">Autorización</text><text x="375" y="124" font-size="13" fill="#5B6670">activo · entidad · beneficiario</text><text x="625" y="98" font-size="17" font-weight="700">Base de</text><text x="625" y="120" font-size="17" font-weight="700">Comercios</text><text x="625" y="140" font-size="12" fill="#5B6670">tablas compartidas</text><text x="875" y="98" font-size="18" font-weight="700">Área operativa</text><text x="875" y="124" font-size="13" fill="#5B6670">aplica novedades</text><text x="875" y="212" font-size="16" font-weight="700">Banco adquirente</text><text x="875" y="234" font-size="13" fill="#5B6670">envía la novedad por ticket</text></g>
+      <g stroke="#2D5C7F" stroke-width="2" fill="none" marker-end="url(#ma)"><path d="M210 105H270"/><path d="M480 105H540" stroke-dasharray="7 5"/><path d="M770 105H710"/><path d="M875 180V150"/></g>
+      <text x="510" y="40" text-anchor="middle" font-size="14" fill="#5B6670">lectura directa sobre la base de otra área, dentro de la ruta del pago</text>
+      <text x="380" y="200" text-anchor="middle" font-size="15" fill="#2D5C7F">1 pago P2M = 1 lectura a la base de Comercios</text>
+      <text x="380" y="224" text-anchor="middle" font-size="15" fill="#2D5C7F">si la base cae, se inhabilita P2M y solo opera P2P</text>
+    </svg><figcaption><b>AS-IS.</b> Autorización no consume una interfaz con contrato, sino las tablas de Comercios. Tres acoplamientos: de <b>esquema</b> (un cambio de columna rompe al lector), de <b>disponibilidad</b> (si la base cae, cae P2M) y de <b>carga</b> (cada pago es una consulta sobre la base operativa).</figcaption></figure>
+    <figure class="view" data-view="ecst"><svg viewBox="0 0 1000 270" role="img" aria-label="Con ECST: Comercios publica el estado completo en estado-comercio y Autorización valida contra su vista local" style="font-family:Arial,sans-serif">
       <defs><marker id="mg" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#4A7A5E"/></marker></defs>
-      <g fill="#FFFFFF" stroke="#4A7A5E" stroke-width="1.6"><rect x="20" y="40" width="200" height="90" rx="6"/><rect x="290" y="40" width="220" height="90" rx="6"/><rect x="590" y="40" width="190" height="90" rx="6"/><rect x="590" y="160" width="190" height="70" rx="6"/></g>
-      <rect x="830" y="40" width="150" height="190" rx="6" fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5"/>
-      <g text-anchor="middle" fill="#1B2430"><text x="120" y="78" font-size="19" font-weight="700">Comercios</text><text x="120" y="104" font-size="13" fill="#5B6670">publica al cambiar</text><text x="400" y="78" font-size="18" font-weight="700">estado-comercio</text><text x="400" y="104" font-size="13" fill="#5B6670">compactado · clave merchantId</text><text x="685" y="78" font-size="18" font-weight="700">Autorización</text><text x="685" y="104" font-size="13" fill="#5B6670">copia local de fichas</text><text x="685" y="192" font-size="16" font-weight="700">Antifraude · Liquidación</text><text x="685" y="214" font-size="13" fill="#5B6670">mismo stream</text><text x="905" y="125" font-size="16" font-weight="700">Transacción</text><text x="905" y="148" font-size="13" fill="#5B6670">consulta local</text></g>
-      <g stroke="#4A7A5E" stroke-width="2" fill="none" marker-end="url(#mg)"><path d="M220 85H290"/><path d="M510 85H590"/><path d="M510 110Q550 110 560 150T590 195"/><path d="M830 95H780"/></g>
-      <text x="420" y="225" text-anchor="middle" font-size="15" fill="#4A7A5E">consultas ∝ cambios de comercios, no transacciones</text>
-    </svg><figcaption><b>TO-BE.</b> Comercios transfiere su estado una vez por cambio; cada consumidor materializa la ficha y la consulta localmente.</figcaption></figure>
+      <g fill="#FFFFFF" stroke="#4A7A5E" stroke-width="1.6"><rect x="20" y="50" width="200" height="90" rx="6"/><rect x="290" y="50" width="220" height="90" rx="6"/><rect x="590" y="50" width="190" height="90" rx="6"/></g>
+      <g fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5" stroke-dasharray="6 4"><rect x="590" y="170" width="190" height="70" rx="6"/></g>
+      <rect x="830" y="50" width="150" height="190" rx="6" fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5"/>
+      <g text-anchor="middle" fill="#1B2430"><text x="120" y="86" font-size="19" font-weight="700">Comercios</text><text x="120" y="110" font-size="13" fill="#5B6670">único escritor</text><text x="120" y="128" font-size="12" fill="#5B6670">publica al aplicar el cambio</text><text x="400" y="88" font-size="18" font-weight="700">estado-comercio</text><text x="400" y="112" font-size="13" fill="#5B6670">compactado · clave merchantId</text><text x="400" y="128" font-size="12" fill="#5B6670">contrato Avro en Apicurio</text><text x="685" y="88" font-size="18" font-weight="700">Autorización</text><text x="685" y="114" font-size="13" fill="#5B6670">vista local del comercio</text><text x="685" y="200" font-size="15" font-weight="700">Liquidación · Antifraude</text><text x="685" y="222" font-size="12" fill="#5B6670">mismo stream (Sección II)</text><text x="905" y="135" font-size="16" font-weight="700">Pago P2M</text><text x="905" y="158" font-size="13" fill="#5B6670">valida local</text></g>
+      <g stroke="#4A7A5E" stroke-width="2" fill="none" marker-end="url(#mg)"><path d="M220 95H290"/><path d="M510 95H590"/><path d="M510 120Q550 120 560 160T590 205"/><path d="M830 105H780"/></g>
+      <text x="300" y="235" text-anchor="middle" font-size="15" fill="#4A7A5E">lecturas a Comercios ∝ novedades, no pagos</text>
+    </svg><figcaption><b>TO-BE.</b> Comercios transfiere el estado completo una vez por novedad. Autorización mantiene su propia vista y deja de tocar la base de Comercios. La base vuelve a ser privada del dominio.</figcaption></figure>
   </div>
   <div class="grid three">
-    <div class="card accent"><h3>La carga sigue a los cambios</h3><p>Las consultas a Comercios crecen con los cambios de comercios, no con las transacciones.</p></div>
-    <div class="card accent"><h3>API Connect sale de la ruta</h3><p>El gateway deja de ser cuello de botella para esta consulta; conserva su papel en el tráfico externo.</p></div>
-    <div class="card accent"><h3>Autonomía ante fallas</h3><p>Si Comercios se cae, Autorización sigue aprobando con la última ficha conocida.</p></div>
+    <div class="card accent"><h3>P2M deja de caer con la base</h3><p>Si Comercios o su base fallan, Autorización sigue validando con el último estado conocido. Hoy esa falla apaga P2M.</p></div>
+    <div class="card accent"><h3>El esquema deja de ser compartido</h3><p>Comercios puede cambiar sus tablas; lo que se promete hacia afuera es el contrato, versionado y validado en el Registry.</p></div>
+    <div class="card accent"><h3>La carga sigue a las novedades</h3><p>Las lecturas sobre Comercios crecen con las novedades de comercios, que llegan por ticket, no con los pagos.</p></div>
   </div>
 </section>
 
 <!-- I · CARGA -->
 <section class="s compact" id="i-carga" data-group="i">
   <div class="kicker"><span class="sec">I</span>Migración a ECST · Reducción de carga</div>
-  <h2>Cuánta carga sale de las APIs sincrónicas</h2>
-  <p class="muted" style="margin-bottom:1rem">Mueva los supuestos. Todos los valores son <span class="est">ESTIMACIÓN</span> para ilustrar el orden de magnitud; se reemplazan con datos de Redeban cuando estén disponibles.</p>
+  <h2>Cuánta carga sale de la base de Comercios</h2>
+  <p class="muted" style="margin-bottom:1rem">Mueva los supuestos. El valor de TPS parte de cifras públicas y del reparto P2M confirmado; los demás son <span class="est">ESTIMACIÓN</span> conservadora.</p>
   <div class="calc">
     <div class="inputs">
       <h3>Supuestos</h3>
-      <div class="fld"><label>Transacciones por segundo (promedio)<small>autorizaciones que hoy consultan comercios-api</small></label><input type="number" id="lTps" value="400" min="0"></div>
-      <div class="fld"><label>Cambios de fichas por día<small>altas, suspensiones, cambios de límite</small></label><input type="number" id="lChg" value="5000" min="0"></div>
-      <div class="fld"><label>Consumidores del stream<small>Autorización, Antifraude, Liquidación</small></label><input type="number" id="lCons" value="3" min="1"></div>
+      <div class="fld"><label>Pagos P2M por segundo (promedio)<small>~200 M/mes<a class="cite" href="#ref-1">[1]</a> ≈ 77 TPS × 45&nbsp;% P2M</small></label><input type="number" id="lTps" value="35" min="0"></div>
+      <div class="fld"><label>Novedades de comercios por día<small>altas, bloqueos, cambios y eliminaciones; llegan por ticket</small></label><input type="number" id="lChg" value="5000" min="0"></div>
+      <div class="fld"><label>Consumidores del stream<small>Autorización, Liquidación y Antifraude</small></label><input type="number" id="lCons" value="3" min="1"></div>
     </div>
     <div>
       <div class="kpis">
-        <div class="kpi r"><span>Consultas/día hoy</span><b id="lToday">–</b></div>
+        <div class="kpi r"><span>Lecturas/día hoy</span><b id="lToday">–</b></div>
         <div class="kpi g"><span>Lecturas/día con ECST</span><b id="lEcst">–</b></div>
         <div class="kpi g"><span>Reducción</span><b id="lRed">–</b></div>
-        <div class="kpi"><span>Consultas por pago</span><b>1 → 0</b></div>
+        <div class="kpi"><span>Lecturas a Comercios por pago</span><b>1 → 0</b></div>
       </div>
-      <div class="formula">Hoy  = TPS × 86 400
-ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
+      <div class="formula">Hoy  = TPS P2M × 86 400   (lecturas a la base de Comercios)
+ECST = novedades/día × consumidores   (lecturas del tópico)
+Pico = 350 TPS × 45 % ≈ 158 TPS P2M → 13,6 M lecturas/día evitadas</div>
     </div>
   </div>
+  <p class="muted" style="margin-top:1rem;font-size:.9rem">Los 350 TPS son el requisito de capacidad de pagos inmediatos citado en un caso de cliente de Palo Alto Networks<a class="cite" href="#ref-2">[2]</a>, no una medición. Las 5.000 novedades al día son un supuesto alto, que juega en contra de ECST: aun así la reducción supera dos órdenes de magnitud.</p>
 </section>
 
 <!-- I · PATRONES -->
 <section class="s compact" id="i-patrones" data-group="i">
   <div class="kicker"><span class="sec">I</span>Migración a ECST · Por qué no otro patrón</div>
-  <h2>ECST no es un delta, ni una notificación, ni Event Sourcing</h2>
+  <h2>ECST no es base compartida, ni delta, ni notificación</h2>
   <div class="tw"><table>
     <thead><tr><th>Patrón</th><th>Qué viaja</th><th>Problema en este flujo</th><th>Veredicto</th></tr></thead>
     <tbody>
-      <tr><td><b>Delta</b></td><td><code>limiteDiario: +500000</code></td><td>No es compactable: para conocer el estado hay que reproducir todos los cambios; perder uno corrompe la copia.</td><td><span class="tag red">descartado</span></td></tr>
-      <tr><td><b>Notificación</b></td><td><code>comercio 123 cambió</code></td><td>Antipatrón aquí: cada consumidor vuelve a llamar a comercios-api. El acoplamiento sincrónico sigue intacto.</td><td><span class="tag red">descartado</span></td></tr>
+      <tr><td><b>Base compartida</b> <span class="muted">(hoy)</span></td><td>nada: el consumidor lee las tablas</td><td>Acopla esquema, disponibilidad y carga. No hay contrato, versión ni dueño de la interfaz.</td><td><span class="tag red">se reemplaza</span></td></tr>
+      <tr><td><b>Delta</b></td><td><code>estado: ACTIVO → BLOQUEADO</code></td><td>No es compactable: para conocer el estado hay que reproducir todos los cambios; perder uno corrompe la vista.</td><td><span class="tag red">descartado</span></td></tr>
+      <tr><td><b>Notificación</b></td><td><code>comercio 123 cambió</code></td><td>Cada consumidor vuelve a leer la base de Comercios: el acoplamiento sigue intacto.</td><td><span class="tag red">descartado</span></td></tr>
       <tr><td><b>Event Sourcing</b></td><td>todos los hechos del dominio</td><td>Es persistencia <i>dentro</i> del dominio, no integración <i>entre</i> dominios. Expondría el modelo interno de Comercios.</td><td><span class="tag amber">otro problema</span></td></tr>
-      <tr><td><b>ECST</b></td><td>la ficha completa del comercio</td><td>Autosuficiente, compactable por <code>merchantId</code> y reproducible desde el offset 0.</td><td><span class="tag green">elegido</span></td></tr>
+      <tr><td><b>ECST</b></td><td>el estado completo del comercio</td><td>Autosuficiente, compactable por <code>merchantId</code> y reproducible desde el offset 0.</td><td><span class="tag green">elegido</span></td></tr>
     </tbody>
   </table></div>
+</section>
+
+<!-- I · MIGRACIÓN -->
+<section class="s compact" id="i-migracion" data-group="i">
+  <div class="kicker"><span class="sec">I</span>Migración a ECST · Sin apagar P2M</div>
+  <h2>Cuatro pasos, cada uno reversible</h2>
+  <ol class="steps">
+    <li><b>1 · Publicar</b>Con el GP2 publicador, Comercios obtiene el tópico y el esquema registrado, sin tickets. Escribe el estado en su base y, en la misma transacción, en una tabla <i>outbox</i> que se publica a <code>estado-comercio</code>. Autorización sigue leyendo la base.</li>
+    <li><b>2 · Materializar en sombra</b>Con el GP2 suscriptor, Autorización consume desde el offset 0, arma su vista y compara cada decisión con la lectura directa. Sale de este paso cuando no hay diferencias.</li>
+    <li><b>3 · Cambiar la lectura</b>Autorización decide con su vista. La lectura directa queda solo como respaldo, apagable por configuración.</li>
+    <li><b>4 · Cerrar la base</b>Se revoca el permiso de lectura de Autorización sobre las tablas de Comercios. Desde aquí, el contrato es la única interfaz y la base tiene un solo dueño, como exige la Sección II.</li>
+  </ol>
+  <div class="grid two" style="margin-top:1.1rem">
+    <div class="card"><h3>Orden de arranque</h3><p>Terraform crea red y clúster; Helm instala Argo CD, Crossplane, Kafka, Dapr y Apicurio con almacenamiento persistente. Solo después Argo CD y Crossplane gestionan tópicos, esquemas y servicios. Ninguno crea el clúster en el que corre.</p></div>
+    <div class="card"><h3>Aislamiento de planos</h3><p>Kafka, Apicurio y los operadores, a cargo del equipo Platform, corren en un pool de nodos propio; los servicios de dominio, en otro, con cuotas por namespace. Un consumidor ruidoso no afecta al broker. Autorización solo se declara lista cuando su vista alcanzó el final del tópico.</p></div>
+  </div>
 </section>
 
 <!-- I · CONTRATO -->
@@ -456,42 +483,45 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
   <span class="k">"fields"</span>: [
     {<span class="k">"name"</span>: <span class="s2">"merchantId"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>},
     {<span class="k">"name"</span>: <span class="s2">"estado"</span>, <span class="k">"type"</span>: {<span class="k">"type"</span>: <span class="s2">"enum"</span>, <span class="k">"name"</span>: <span class="s2">"Estado"</span>,
-       <span class="k">"symbols"</span>: [<span class="s2">"ACTIVO"</span>, <span class="s2">"SUSPENDIDO"</span>, <span class="s2">"BAJA"</span>]}},
-    {<span class="k">"name"</span>: <span class="s2">"mcc"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>},
-    {<span class="k">"name"</span>: <span class="s2">"limiteDiario"</span>, <span class="k">"type"</span>: <span class="s2">"long"</span>, <span class="k">"default"</span>: 0},
+       <span class="k">"symbols"</span>: [<span class="s2">"DESCONOCIDO"</span>, <span class="s2">"ACTIVO"</span>, <span class="s2">"INACTIVO"</span>, <span class="s2">"BLOQUEADO"</span>],
+       <span class="k">"default"</span>: <span class="s2">"DESCONOCIDO"</span>}},
+    {<span class="k">"name"</span>: <span class="s2">"entidadAdquirente"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>},
+    {<span class="k">"name"</span>: <span class="s2">"beneficiario"</span>, <span class="k">"type"</span>: {<span class="k">"type"</span>: <span class="s2">"record"</span>,
+       <span class="k">"name"</span>: <span class="s2">"Beneficiario"</span>, <span class="k">"fields"</span>: [
+         {<span class="k">"name"</span>: <span class="s2">"huellaDocumento"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>},
+         {<span class="k">"name"</span>: <span class="s2">"huellaCuenta"</span>, <span class="k">"type"</span>: <span class="s2">"string"</span>}]}},
     {<span class="k">"name"</span>: <span class="s2">"version"</span>, <span class="k">"type"</span>: <span class="s2">"long"</span>},
     {<span class="k">"name"</span>: <span class="s2">"actualizadoEn"</span>, <span class="k">"type"</span>: {<span class="k">"type"</span>: <span class="s2">"long"</span>,
-       <span class="k">"logicalType"</span>: <span class="s2">"timestamp-millis"</span>}},
-    {<span class="k">"name"</span>: <span class="s2">"canal"</span>, <span class="k">"type"</span>: [<span class="s2">"null"</span>, <span class="s2">"string"</span>], <span class="k">"default"</span>: null}
+       <span class="k">"logicalType"</span>: <span class="s2">"timestamp-millis"</span>}}
   ]
 }</pre>
     <div class="tw"><table>
       <thead><tr><th>Campo</th><th>Rol</th></tr></thead>
       <tbody>
-        <tr><td><code>merchantId</code></td><td>Identidad y clave de Kafka: la compactación conserva la última ficha por comercio.</td></tr>
-        <tr><td><code>estado</code></td><td>Lo que Autorización necesita para aprobar o negar. Obligatorio, sin default.</td></tr>
-        <tr><td><code>mcc</code></td><td>Categoría del comercio, usada por reglas de autorización y antifraude.</td></tr>
-        <tr><td><code>limiteDiario</code></td><td>Tope de monto; default 0.</td></tr>
-        <tr><td><code>version</code></td><td>Secuencia creciente: una ficha tardía no pisa una más reciente.</td></tr>
-        <tr><td><code>actualizadoEn</code></td><td>Momento del cambio; permite medir la frescura de la copia.</td></tr>
-        <tr><td><code>canal</code></td><td>Opcional con default <code>null</code>: el ejemplo de evolución que sí se acepta.</td></tr>
+        <tr><td><code>merchantId</code></td><td>Identidad y clave de Kafka: la compactación conserva el último estado por comercio.</td></tr>
+        <tr><td><code>estado</code></td><td>Primera validación. Obligatorio. Su default <code>DESCONOCIDO</code> hace que un lector viejo rechace un estado que no conoce, en vez de fallar<a class="cite" href="#ref-5">[5]</a>.</td></tr>
+        <tr><td><code>entidadAdquirente</code></td><td>Segunda validación: el comercio pertenece a la entidad que origina el pago.</td></tr>
+        <tr><td><code>beneficiario</code></td><td>Tercera validación. Viaja como huella HMAC, no en claro: Autorización calcula la huella del dato que llega en el pago y la compara.</td></tr>
+        <tr><td><code>version</code></td><td>Secuencia creciente: un estado tardío no pisa uno más reciente.</td></tr>
+        <tr><td><code>actualizadoEn</code></td><td>Momento en que el área operativa aplicó el cambio; mide la frescura de la vista.</td></tr>
       </tbody>
     </table></div>
   </div>
   <div class="grid two" style="margin-top:1.1rem">
-    <div class="card warn"><h3>Baja = tombstone</h3><p>La baja definitiva se publica con valor nulo para la clave <code>merchantId</code>; el broker purga el historial de ese comercio en la compactación.</p></div>
-    <div class="card ochre"><h3>Qué nunca viaja</h3><p>Datos PCI: <b>nunca un PAN</b>. Los datos personales (PII) del representante legal quedan en Comercios; el contrato solo lleva lo necesario para decidir.</p></div>
+    <div class="card warn"><h3>Eliminar = tombstone</h3><p>La eliminación de un comercio se publica con valor nulo para su <code>merchantId</code>; la vista lo borra y el broker purga su historial al compactar. El bloqueo preventivo<a class="cite" href="#ref-3">[3]</a>, en cambio, es un estado: <code>BLOQUEADO</code>.</p></div>
+    <div class="card ochre"><h3>Datos personales</h3><p>Los datos del beneficiario son datos personales (Ley 1581 de 2012<a class="cite" href="#ref-4">[4]</a>). Viajan solo como huella con llave guardada en un gestor de secretos, y el tópico solo lo leen consumidores autorizados por ACL.</p></div>
   </div>
+  <p class="muted" style="margin-top:.9rem;font-size:.9rem">Qué datos del beneficiario se comparan exactamente (documento, cuenta, nombre) está por confirmar; el contrato los agrupa en un registro para poder ampliarlo sin romper a nadie.</p>
 </section>
 
 <!-- I · COMPATIBILIDAD -->
 <section class="s compact" id="i-compat" data-group="i">
   <div class="kicker"><span class="sec">I</span>Contrato · Política de compatibilidad</div>
   <h2>FULL_TRANSITIVE, porque el tópico se relee desde el offset 0</h2>
-  <p class="muted">Un consumidor nuevo reconstruye su copia leyendo fichas escritas con <i>todas</i> las versiones del esquema. Por eso la compatibilidad no se verifica solo contra la versión anterior.</p>
+  <p class="muted">Un consumidor nuevo reconstruye su vista leyendo estados escritos con <i>todas</i> las versiones del esquema. Por eso la compatibilidad no se verifica solo contra la versión anterior.</p>
   <div class="compat-options">
-    <article class="compat-card"><span class="tag amber">Hacia atrás</span><h3>BACKWARD</h3><div class="compat-rule">lector nuevo ← datos viejos</div><p>El consumidor actualizado lee fichas viejas.</p></article>
-    <article class="compat-card"><span class="tag amber">Hacia adelante</span><h3>FORWARD</h3><div class="compat-rule">lector viejo ← datos nuevos</div><p>El consumidor sin actualizar lee fichas nuevas.</p></article>
+    <article class="compat-card"><span class="tag amber">Hacia atrás</span><h3>BACKWARD</h3><div class="compat-rule">lector nuevo ← datos viejos</div><p>El consumidor actualizado lee estados viejos.</p></article>
+    <article class="compat-card"><span class="tag amber">Hacia adelante</span><h3>FORWARD</h3><div class="compat-rule">lector viejo ← datos nuevos</div><p>El consumidor sin actualizar lee estados nuevos.</p></article>
     <article class="compat-card"><span class="tag amber">Ambos</span><h3>FULL</h3><div class="compat-rule">BACKWARD + FORWARD</div><p>Solo contra la versión inmediatamente anterior.</p></article>
     <article class="compat-card selected"><span class="tag green">Seleccionada</span><h3>FULL_TRANSITIVE</h3><div class="compat-rule">FULL × todo el historial</div><p>Productor y consumidores despliegan en cualquier orden y el reproceso desde 0 es seguro.</p></article>
   </div>
@@ -506,15 +536,16 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
     <div class="opts" id="labOpts">
       <button class="btn on" type="button" data-c="0">Un junior quita <code>estado</code></button>
       <button class="btn" type="button" data-c="1">Agregar <code>canal</code> opcional</button>
-      <button class="btn" type="button" data-c="2">Cambiar <code>mcc</code> de string a int</button>
-      <button class="btn" type="button" data-c="3">Renombrar <code>limiteDiario</code> a <code>limite</code></button>
+      <button class="btn" type="button" data-c="2">Cambiar <code>entidadAdquirente</code> de string a int</button>
+      <button class="btn" type="button" data-c="3">Agregar el estado <code>SUSPENDIDO_TEMPORAL</code></button>
+      <button class="btn" type="button" data-c="4">Cambiar cómo se calcula <code>huellaCuenta</code></button>
     </div>
     <div>
       <pre id="labCode" style="min-height:8.5rem"></pre>
       <div class="verdict no" id="labVerdict"><span class="http" id="labHttp">409</span><div><p id="labWhy"></p><div class="checks" id="labChecks"></div></div></div>
     </div>
   </div>
-  <div class="callout g"><h3>La protección en una frase</h3><p>El Registry es la barrera técnica: el GP no obtiene un ID de esquema para un cambio incompatible, el productor no puede serializar y Autorización, Antifraude y Liquidación siguen leyendo fichas válidas.</p></div>
+  <div class="callout g"><h3>La protección en una frase</h3><p>El Registry es la barrera técnica: el GP no obtiene un ID de esquema para un cambio incompatible, el productor no puede serializar y Autorización sigue leyendo estados válidos. Lo que el Registry no ve, como un cambio de significado con el mismo tipo, lo frena la revisión del dueño del contrato.</p></div>
 </section>
 
 <!-- I · GOBIERNO Y LÍMITES -->
@@ -522,14 +553,14 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
   <div class="kicker"><span class="sec">I</span>Contrato · Gobierno y límites</div>
   <h2>Quién responde por el contrato y dónde deja de servir</h2>
   <div class="grid four">
-    <div class="card"><h3>Dueño</h3><p>El equipo Comercios es el único escritor y dueño del contrato.</p></div>
-    <div class="card"><h3>SLO de latencia</h3><p>Tiempo máximo entre el cambio en Comercios y su llegada a la copia local, medido con <code>actualizadoEn</code>.</p></div>
-    <div class="card"><h3>PII y PCI</h3><p>Clasificación de cada campo; un PAN nunca entra al contrato.</p></div>
+    <div class="card"><h3>Dueño</h3><p>El equipo stream-aligned Comercios (Sección II) es el único escritor y dueño del contrato. Hoy el área operativa aplica las novedades que el banco adquirente envía por ticket; en el TO-BE las aplica a través del servicio de Comercios.</p></div>
+    <div class="card"><h3>SLO de frescura</h3><p>p99 ≤ 2&nbsp;s entre <code>actualizadoEn</code> y la vista de Autorización: lo mismo que tarda hoy un bloqueo.</p></div>
+    <div class="card"><h3>Seguridad</h3><p>Cada campo clasificado; el beneficiario solo como huella; lectura del tópico restringida por ACL. Las reglas son políticas como código, con el apoyo de DevSecOps.</p></div>
     <div class="card"><h3>Cambio disruptivo</h3><p>Producción dual v1/v2 en tópicos paralelos hasta que migran todos los consumidores; luego se retira v1.</p></div>
   </div>
   <div class="grid two" style="margin-top:1.1rem">
-    <div class="card accent"><span class="tag green">Aceptable aquí</span><h3>Consistencia eventual</h3><p>Autorización decide con la última ficha recibida. Una ficha que llega segundos tarde es aceptable para el MCC o el límite diario, y es mejor que dejar de autorizar cuando Comercios no responde.</p></div>
-    <div class="card warn"><span class="tag red">Cuándo cambia</span><h3>Bloqueo por fraude</h3><p>Un bloqueo urgente no puede esperar la propagación. Para ese caso hay que justificar otro mecanismo (por ejemplo, un comando prioritario o una verificación sincrónica acotada) en lugar de depender del SLO del stream.</p></div>
+    <div class="card accent"><span class="tag green">Aceptable aquí</span><h3>Consistencia eventual</h3><p>Hoy un bloqueo, actualización o eliminación tarda 1–2&nbsp;s en hacer efecto. Con un SLO de 2&nbsp;s el stream no empeora esa ventana y, además, P2M sigue operando cuando Comercios falla.</p></div>
+    <div class="card warn"><span class="tag red">Cuándo cambia</span><h3>Si la vista se atrasa</h3><p>Autorización publica su retraso como métrica. Por encima de 2&nbsp;s se alerta al on-call de Comercios y de Plataforma. Si con retraso alto se sigue aprobando o se suspende P2M lo decide el dueño del riesgo; está por definir.</p></div>
   </div>
 </section>
 
@@ -926,7 +957,7 @@ requests.post(
     <li><div><b>Escritor único</b>: un segundo servicio es rechazado.</div></li>
     <li><div><b>Esquema incompatible</b>: 409 y el GP se detiene.</div></li>
     <li class="opt"><div><b>Cambio de broker a Redis</b>, sin tocar código <span class="st">opcional</span></div></li>
-    <li><div><b>ECST en acción</b>: se apaga comercios-api y autorizacion-svc sigue aprobando.</div></li>
+    <li><div><b>ECST en acción</b>: se apaga Comercios y autorizacion-svc sigue aprobando P2M.</div></li>
   </ul>
   <div class="tw" style="margin-top:1.2rem"><table>
     <thead><tr><th>Medición</th><th>Qué demuestra</th></tr></thead>
@@ -935,7 +966,7 @@ requests.post(
       <tr><td>Archivos que toca el dev</td><td>Superficie de configuración extrínseca</td></tr>
       <tr><td>Conceptos que debe conocer</td><td>Carga cognitiva</td></tr>
       <tr><td>Tiempo hasta el primer evento</td><td>Leading indicator del lead time</td></tr>
-      <tr><td>Llamadas por minuto a comercios-api</td><td>Reducción de carga sincrónica de la Sección I</td></tr>
+      <tr><td>Lecturas por minuto a Comercios</td><td>Reducción de carga sobre la base de Comercios (Sección I)</td></tr>
     </tbody>
   </table></div>
   <div class="grid two" style="margin-top:1.1rem">
@@ -963,8 +994,8 @@ requests.post(
     </tbody>
   </table></div>
   <div class="grid two" style="margin-top:1.1rem">
-    <div class="card"><h3>Responsables</h3><ul class="clean"><li>I · Diseño orientado a eventos: Daniel</li><li>II · Conway inversa: por asignar</li><li>III · Plataforma como producto: por asignar</li><li>IV · PoC: Daniel</li></ul></div>
-    <div class="card"><h3>Decisiones pendientes</h3><ul class="clean"><li>Responsables de II y III.</li><li>Backstage: ¿fuera de la PoC o formulario opcional?</li><li>Repo de la PoC.</li><li>Confirmar el flujo con el compañero de Redeban.</li><li>Supuestos del ROI: equipos, solicitudes al mes y costo hora.</li></ul></div>
+    <div class="card"><h3>Responsables</h3><ul class="clean"><li>I · Diseño orientado a eventos: Ruben</li><li>II · Conway inversa: por asignar</li><li>III · Plataforma como producto: por asignar</li><li>IV · PoC: Daniel</li></ul></div>
+    <div class="card"><h3>Decisiones pendientes</h3><ul class="clean"><li>Responsables de II y III.</li><li>Backstage: ¿fuera de la PoC o formulario opcional?</li><li>Repo de la PoC.</li><li>Supuestos del ROI: equipos, solicitudes al mes y costo hora.</li></ul></div>
   </div>
 </section>
 
@@ -977,7 +1008,7 @@ requests.post(
     <tbody>
       <tr><td>Dapr + Avro + Apicurio no conecta</td><td>Plan B con JSON y validación en el GP</td></tr>
       <tr><td>Escritor único y solo lectura con scopes</td><td>Declararlo; ACL de Kafka como evolución</td></tr>
-      <tr><td>Flujo de Comercios no validado</td><td>Confirmar antes de F2</td></tr>
+      <tr><td>Datos del beneficiario sin precisar</td><td>Agrupados en un registro ampliable del contrato</td></tr>
       <tr><td>Secciones II y III sin responsable</td><td>Asignar en la primera reunión</td></tr>
       <tr><td>Supuestos del ROI sin datos</td><td>Estimaciones marcadas como tales</td></tr>
     </tbody>
@@ -989,12 +1020,25 @@ requests.post(
   <div class="kicker">Cierre</div>
   <h2>Un mismo caso, cuatro miradas</h2>
   <div class="grid two">
-    <div class="card accent"><span class="tag green">I</span><h3>El estado viaja</h3><p>Autorización deja de preguntar en cada pago; el contrato y FULL_TRANSITIVE evitan que un cambio rompa a los consumidores.</p></div>
+    <div class="card accent"><span class="tag green">I</span><h3>El estado viaja</h3><p>Autorización deja de leer la base de Comercios en cada pago; el contrato y FULL_TRANSITIVE evitan que un cambio rompa a los consumidores.</p></div>
     <div class="card accent"><span class="tag green">II</span><h3>Los equipos cambian primero</h3><p>Cuatro topologías sin híbridos y una interacción que evoluciona hasta el autoservicio.</p></div>
     <div class="card accent"><span class="tag green">III</span><h3>La plataforma se gestiona como producto</h3><p>Pocos caminos oficiales, contribución con on-call claro y valor medido en dólares.</p></div>
     <div class="card accent"><span class="tag green">IV</span><h3>La PoC lo demuestra</h3><p>Dapr y Apicurio quitan la carga extrínseca: el desarrollador conserva solo la lógica del comercio.</p></div>
   </div>
   <p class="muted" style="margin-top:2rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase">ARTI-4219 · Proyecto Integrador #2 · Grupo 2 · 2026-20</p>
+</section>
+
+<!-- REFERENCIAS -->
+<section class="s compact" id="referencias" data-group="cierre">
+  <div class="kicker">Cierre · Fuentes</div>
+  <h2>Referencias</h2>
+  <ol class="refs">
+    <li id="ref-1"><b>[1]</b> El Tiempo. (2026, 6 de septiembre). <i>Colombia puede llegar a 1.000 millones de pagos inmediatos al mes: Andrés Duque, presidente de Redeban</i>. <a href="https://www.eltiempo.com/economia/sector-financiero/colombia-puede-llegar-a-1-000-millones-de-pagos-inmediatos-al-mes-andres-duque-presidente-de-redeban-3583067" target="_blank" rel="noopener">eltiempo.com</a></li>
+    <li id="ref-2"><b>[2]</b> Palo Alto Networks. (s. f.). <i>Redeban secures instant payments across Colombia through platformization</i> [caso de cliente]. <a href="https://www.paloaltonetworks.com/customers/redeban-secures-instant-payments-across-colombia-through-platformization" target="_blank" rel="noopener">paloaltonetworks.com</a></li>
+    <li id="ref-3"><b>[3]</b> Redeban. (2021). <i>Contrato comercial de afiliación</i>. <a href="https://www.rbmcolombia.com/wps/portal/index/pdf/2021/12/Contrato-comercial-afiliacion-Redeban.pdf" target="_blank" rel="noopener">rbmcolombia.com</a></li>
+    <li id="ref-4"><b>[4]</b> Congreso de Colombia. (2012). <i>Ley Estatutaria 1581 de 2012, por la cual se dictan disposiciones generales para la protección de datos personales</i>.</li>
+    <li id="ref-5"><b>[5]</b> Apache Software Foundation. (s. f.). <i>Apache Avro Specification</i>, «Schema Resolution». <a href="https://avro.apache.org/docs/1.11.1/specification/" target="_blank" rel="noopener">avro.apache.org</a></li>
+  </ol>
 </section>
 
 </main>
@@ -1087,20 +1131,22 @@ const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
 /* ---------- Laboratorio de compatibilidad ---------- */
 (function(){
   const C=[
-    {code:'<span class="cm">// candidato v2</span>\n{"name": "merchantId", ...},\n<span class="del">{"name": "estado", "type": {"type": "enum", ...}},</span>\n{"name": "mcc", ...}',
-     ok:false,b:true,f:false,why:'<b>FORWARD falla</b>: los consumidores con v1 exigen <code>estado</code> y no tiene default. Apicurio responde 409, el GP se detiene y el evento nunca llega al tópico.'},
+    {code:'<span class="cm">// candidato v2</span>\n{"name": "merchantId", ...},\n<span class="del">{"name": "estado", "type": {"type": "enum", ...}},</span>\n{"name": "entidadAdquirente", ...}',
+     ok:false,b:true,f:false,why:'<b>FORWARD falla</b>: los consumidores con v1 exigen <code>estado</code> y el campo no tiene default. Apicurio responde 409, el GP se detiene y el evento nunca llega al tópico.'},
     {code:'<span class="cm">// candidato v2</span>\n...\n{"name": "canal", "type": ["null", "string"],\n <span class="k">"default"</span>: null}',
-     ok:true,b:true,f:true,why:'<b>Compatible en ambos sentidos</b>: un lector viejo ignora <code>canal</code>; un lector nuevo usa <code>null</code> al leer fichas viejas. Apicurio registra la nueva versión.'},
-    {code:'<span class="cm">// candidato v2</span>\n{"name": "mcc", "type": <span class="del">"string"</span> <span class="k">"int"</span>}',
+     ok:true,b:true,f:true,why:'<b>Compatible en ambos sentidos</b>: un lector viejo ignora <code>canal</code>; un lector nuevo usa <code>null</code> al leer estados viejos. Apicurio registra la nueva versión.'},
+    {code:'<span class="cm">// candidato v2</span>\n{"name": "entidadAdquirente", "type": <span class="del">"string"</span> <span class="k">"int"</span>}',
      ok:false,b:false,f:false,why:'<b>Falla en ambos sentidos</b>: Avro no promueve string a int ni al revés. Ninguna versión puede leer la otra.'},
-    {code:'<span class="cm">// candidato v2</span>\n{"name": <span class="del">"limiteDiario"</span> <span class="k">"limite"</span>,\n "type": "long", "default": 0}',
-     ok:true,b:true,f:true,why:'<b>Pasa el Registry, pero es un cambio silencioso</b>: como hay default, cada lector usa 0 cuando no encuentra su campo. Técnicamente compatible, semánticamente peligroso: lo frena la revisión del dueño (CODEOWNERS), no el Registry.'}
+    {code:'<span class="cm">// candidato v2</span>\n"symbols": ["DESCONOCIDO", "ACTIVO", "INACTIVO",\n            "BLOQUEADO", <span class="k">"SUSPENDIDO_TEMPORAL"</span>],\n"default": "DESCONOCIDO"',
+     ok:true,b:true,f:true,warn:true,why:'<b>Compatible gracias al default del enum</b>: un lector viejo lee el símbolo nuevo como <code>DESCONOCIDO</code> y rechaza ese pago en vez de romperse. Falla cerrado, pero esos comercios quedan sin P2M hasta que Autorización se actualice: el dueño lo anuncia antes de publicar.'},
+    {code:'<span class="cm">// candidato v2 · el esquema no cambia</span>\n{"name": "huellaCuenta", "type": "string"}\n<span class="del">// HMAC(cuenta)</span>\n<span class="k">// HMAC(entidad + cuenta)</span>',
+     ok:true,b:true,f:true,warn:true,why:'<b>Pasa el Registry, pero rompe a todos</b>: el tipo no cambió, así que no hay nada que verificar. Autorización calcula la huella anterior, ninguna coincide y se rechazan los pagos P2M. Es un cambio disruptivo: va por producción dual v1/v2 y lo frena la revisión del dueño (CODEOWNERS), no el Registry.'}
   ];
   const btns=[...document.querySelectorAll('#labOpts .btn')];
   function show(i){
     const c=C[i];btns.forEach((b,k)=>b.classList.toggle('on',k===i));
     document.getElementById('labCode').innerHTML=c.code;
-    const v=document.getElementById('labVerdict');v.classList.toggle('no',!c.ok||i===3);
+    const v=document.getElementById('labVerdict');v.classList.toggle('no',!c.ok||!!c.warn);
     document.getElementById('labHttp').textContent=c.ok?'200':'409';
     document.getElementById('labWhy').innerHTML=c.why;
     document.getElementById('labChecks').innerHTML=`<span class="tag ${c.b?'green':'red'}">BACKWARD ${c.b?'✓':'✕'}</span><span class="tag ${c.f?'green':'red'}">FORWARD ${c.f?'✓':'✕'}</span><span class="tag ${c.ok?'green':'red'}">TRANSITIVE ${c.ok?'✓':'✕'}</span>`;
@@ -1193,7 +1239,7 @@ const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
     if(off){hint.textContent='Comercios está apagado: no hay fichas nuevas, pero Autorización sigue con la última.';return transaction();}
     reset();ver++;pktTxt.textContent='ficha v'+ver;$('comTxt').textContent='ficha completa · v'+ver;
     show(pkt,true);place(220,110);focus('n-com');mark(0);
-    hint.textContent='Comercios cambia el límite de un comercio y publica la ficha completa a su sidecar.';
+    hint.textContent='El área operativa bloquea un comercio y Comercios publica la ficha completa a su sidecar.';
     R.ev.classList.add('on');await travel(R.ev);
     focus('n-dapr');mark(1);hint.textContent='El sidecar Dapr serializa en Avro con el esquema registrado.';await wait(600);
     focus('n-reg');mark(2);$('regTxt').textContent='ID vigente · compatible';hint.textContent='Apicurio guarda el contrato con FULL_TRANSITIVE.';await wait(650);
@@ -1201,7 +1247,7 @@ const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
     focus('n-topic');mark(3);hint.textContent='La ficha queda en estado-comercio, compactado por merchantId.';await wait(600);
     place(720,110);R.cs.classList.add('on');await travel(R.cs);
     focus('n-aut');mark(4);$('autTxt').textContent='copia local · v'+ver;show(pkt,false);
-    hint.textContent='Autorización actualiza su copia local. La próxima transacción no llamará a Comercios.';
+    hint.textContent='Autorización actualiza su copia local. El próximo pago no leerá la base de Comercios.';
     $('cPub').textContent=++pub;steps.forEach(s=>s.className='done');await wait(500);
   }
   async function bad(){
@@ -1216,8 +1262,8 @@ const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
     reset();pkt.classList.remove('bad');pktTxt.textContent='pago';show(pkt,true);place(745,205);
     focus('n-tx');R.tx.classList.add('on');await travel(R.tx,600);
     focus('n-aut');$('cTx').textContent=++tx;show(pkt,false);
-    hint.textContent=(off?'Comercios está caído, ':'')+'Autorización aprueba con la ficha local v'+ver+': cero llamadas a comercios-api.';
-    $('txTxt').textContent='aprobada con ficha local v'+ver+' · 0 llamadas';
+    hint.textContent=(off?'Comercios está caído, ':'')+'Autorización aprueba con la ficha local v'+ver+': cero lecturas a la base de Comercios.';
+    $('txTxt').textContent='aprobada con ficha local v'+ver+' · 0 lecturas';
   }
   async function run(fn){if(busy)return;busy=true;await fn();busy=false;}
   $('simPub').onclick=()=>run(publish);
