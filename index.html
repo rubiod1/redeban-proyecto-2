@@ -270,7 +270,8 @@ section.s.hero > .sim{max-width:1080px}
 .figs span{font-size:.86rem;color:var(--muted);line-height:1.4;display:block}
 html{scroll-padding-top:1rem}
 @media (max-width:900px){.figs{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:760px){</style>
+@media (max-width:760px){.figs{grid-template-columns:minmax(0,1fr)}}
+</style>
 </head>
 <body>
 <canvas id="bg"></canvas>
@@ -359,8 +360,8 @@ html{scroll-padding-top:1rem}
     <tbody>
       <tr><td>Migración a ECST</td><td class="num">15</td><td><a href="#i">I</a> · flujo Comercios → Autorización y reducción de carga</td></tr>
       <tr><td>Contrato y Schema Registry</td><td class="num">15</td><td><a href="#i-contrato">I</a> · Avro, FULL_TRANSITIVE y laboratorio de cambios</td></tr>
-      <tr><td>Conway inversa y topologías</td><td class="num">10</td><td><a href="#ii">II</a> · cuatro topologías y handoffs eliminados</td></tr>
-      <tr><td>Dinámicas de interacción</td><td class="num">10</td><td><a href="#ii-dinamicas">II</a> · línea de tiempo de modos</td></tr>
+      <tr><td>Conway inversa y topologías</td><td class="num">10</td><td><a href="#ii">II</a> · diagnóstico de Conway y cuatro topologías</td></tr>
+      <tr><td>Dinámicas de interacción</td><td class="num">10</td><td><a href="#ii-dinamicas">II</a> · modos con criterio de salida y API de equipo</td></tr>
       <tr><td>PaaP, 80/20 e InnerSourcing</td><td class="num">15</td><td><a href="#iii">III</a> · Two-in-a-Box, curación y contribución</td></tr>
       <tr><td>Tablero DORA/SPACE/ROI</td><td class="num">15</td><td><a href="#iii-roi">III</a> · calculadora y métricas</td></tr>
       <tr><td>PoC y evidencia</td><td class="num">20</td><td><a href="#iv">IV</a> · GP publicador/suscriptor y 8 demos</td></tr>
@@ -534,83 +535,121 @@ ECST = cambios/día × consumidores   (lectura del tópico, no de la API)</div>
 
 <!-- II · DIAGNÓSTICO -->
 <section class="s" id="ii" data-group="ii">
-  <div class="kicker"><span class="sec">II</span>Reestructuración socio-técnica · Conway inversa <span class="pts">10 pts</span></div>
-  <h2>La arquitectura de Redeban copia sus traspasos</h2>
-  <p class="muted" style="margin-bottom:1rem">Diagnóstico con base en el mapa de fricciones de la Entrega 1.</p>
-  <div class="grid two">
-    <div class="card warn"><span class="tag red">F1</span><h3>Proveedor tercerizado</h3><p>Controla EKS, bases de datos, permisos y despliegues. Todo pasa por un ticket.</p></div>
-    <div class="card warn"><span class="tag red">F4</span><h3>Equipo de API Connect</h3><p>Controla credenciales y publicación de APIs.</p></div>
-    <div class="card warn"><span class="tag red">F3</span><h3>Seguridad al final</h3><p>Revisa al final y rechaza tarde.</p></div>
-    <div class="card warn"><span class="tag red">F2</span><h3>Pipelines copiados</h3><p>Cada repositorio copia y modifica su propio pipeline.</p></div>
-  </div>
-  <div class="callout"><h3>La maniobra</h3><p>Si los equipos están organizados alrededor de tickets, la arquitectura queda organizada alrededor de tickets. Primero diseñamos los equipos que producen la arquitectura que queremos: dominios dueños de su servicio y su stream, y una plataforma que entrega autoservicio.</p></div>
-</section>
-
-<!-- II · TOPOLOGÍAS -->
-<section class="s compact" id="ii-topo" data-group="ii">
-  <div class="kicker"><span class="sec">II</span>Conway inversa · Cuatro topologías, sin híbridos</div>
-  <h2>Nueva estructura de equipos</h2>
-  <div class="topo">
-    <div class="card sa"><span class="tag">Stream-aligned</span><h3>Dominios de negocio</h3><div class="teams">Comercios · Autorización · Liquidación · Canales</div><p>Dueños de su servicio, su base, su API y su stream.</p></div>
-    <div class="card pl"><span class="tag">Platform</span><h3>Plataforma IDP</h3><div class="teams">Backstage · Crossplane · Argo CD + sub-equipo API y Eventos</div><p>Entrega autoservicio. Absorbe al equipo de API Connect.</p></div>
-    <div class="card en"><span class="tag">Enabling</span><h3>Facilitadores temporales</h3><div class="teams">Seguridad/DevSecOps · Contratos de datos (temporal)</div><p>Facilitan capacidades y se extinguen cuando los equipos son autónomos.</p></div>
-    <div class="card cs"><span class="tag">Complicated-subsystem</span><h3>Motor de scoring antifraude</h3><div class="teams">Especialistas</div><p>Complejidad matemática que no conviene repartir entre los streams.</p></div>
-  </div>
-  <div class="grid two" style="margin-top:1.1rem">
-    <div class="card"><h3>Proveedor</h3><p>Queda <b>debajo</b> de la plataforma como primitivo auditado: los equipos ya no le abren tickets.</p></div>
-    <div class="card"><h3>Regla de propiedad</h3><p>Cada activo (servicio, base, API, tópico, esquema) tiene <b>un solo</b> equipo dueño.</p></div>
-  </div>
-</section>
-
-<!-- II · HANDOFFS -->
-<section class="s compact" id="ii-handoffs" data-group="ii">
-  <div class="kicker"><span class="sec">II</span>Conway inversa · Handoffs eliminados</div>
-  <h2>Cada traspaso tiene un reemplazo de autoservicio</h2>
+  <div class="kicker"><span class="sec">II</span>Reestructuración socio-técnica · Diagnóstico de Conway <span class="pts">10 pts</span></div>
+  <h2>La arquitectura de Redeban copia sus tickets</h2>
+  <p class="muted" style="margin-bottom:1rem">«Si la arquitectura del sistema y la de la organización están en conflicto, la organización gana» (Ruth Malan). Las fricciones de la Entrega 1 son esa ley en acción: cada una nace de un traspaso entre equipos.</p>
+  <figure style="margin-top:0"><svg viewBox="0 0 1000 275" role="img" aria-label="Estructura actual: los equipos de desarrollo piden recursos por ticket al proveedor y credenciales al equipo de API Connect" style="font-family:Arial,sans-serif">
+    <defs><marker id="m2a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#2D5C7F"/></marker></defs>
+    <g fill="#FFFFFF" stroke="#C5D0DA" stroke-width="1.5"><rect x="20" y="40" width="200" height="190" rx="6"/><rect x="300" y="40" width="200" height="80" rx="6"/><rect x="300" y="150" width="200" height="80" rx="6"/><rect x="580" y="40" width="400" height="80" rx="6"/><rect x="580" y="150" width="400" height="80" rx="6"/></g>
+    <g text-anchor="middle" fill="#1B2430">
+      <text x="120" y="118" font-size="18" font-weight="700">Equipos de</text><text x="120" y="141" font-size="18" font-weight="700">desarrollo</text>
+      <text x="120" y="166" font-size="13" fill="#5B6670">escriben el código, pero</text><text x="120" y="184" font-size="13" fill="#5B6670">no controlan su infraestructura</text>
+      <text x="400" y="76" font-size="17" font-weight="700">Mesa de tickets</text><text x="400" y="100" font-size="13" fill="#5B6670">SLA del contrato</text>
+      <text x="400" y="186" font-size="17" font-weight="700">Equipo API Connect</text><text x="400" y="210" font-size="13" fill="#5B6670">credenciales y publicación</text>
+      <text x="780" y="76" font-size="17" font-weight="700">Proveedor tercerizado</text><text x="780" y="100" font-size="13" fill="#5B6670">EKS · bases · permisos · despliegues · consola</text>
+      <text x="780" y="186" font-size="17" font-weight="700">API Connect + DataPower</text><text x="780" y="210" font-size="13" fill="#5B6670">más de 300 APIs sin dueño visible</text>
+    </g>
+    <g stroke="#2D5C7F" stroke-width="2" fill="none" marker-end="url(#m2a)" stroke-dasharray="7 5"><path d="M220 80H298"/><path d="M500 80H578"/><path d="M220 190H298"/><path d="M500 190H578"/></g>
+    <g text-anchor="middle" font-size="12" fill="#2D5C7F"><text x="259" y="70">ticket</text><text x="539" y="70">3–4 días</text><text x="259" y="180">ticket</text><text x="539" y="180">1–2 días</text></g>
+    <text x="500" y="262" text-anchor="middle" font-size="15" fill="#2D5C7F">Quien necesita el recurso no es quien lo construye · 4 solicitudes en serie = 12–16 días por servicio nuevo</text>
+  </svg><figcaption><b>AS-IS.</b> Estructura de comunicación actual: cada flecha es un traspaso con espera.</figcaption></figure>
   <div class="tw"><table>
-    <thead><tr><th>Fricción</th><th>Handoff hoy</th><th>Reemplazo</th><th>Equipo dueño</th></tr></thead>
+    <thead><tr><th>Fricción</th><th>Estructura que la produce</th><th>Arquitectura que resulta</th></tr></thead>
     <tbody>
-      <tr><td><span class="tag red">F1</span></td><td>Ticket al proveedor</td><td><b>GP1</b>: microservicio + PostgreSQL en ~10 minutos</td><td>Platform</td></tr>
-      <tr><td><span class="tag red">F4</span></td><td>Ticket de credenciales</td><td>Suscripción en autoservicio (<b>GP2</b>)</td><td>Platform · sub-equipo API y Eventos</td></tr>
-      <tr><td><span class="tag red">F3</span></td><td>Cambios por consola</td><td>Reconciliación GitOps</td><td>Platform</td></tr>
-      <tr><td><span class="tag amber">Eventos</span></td><td>Coordinación manual de esquemas</td><td>Registro con FULL_TRANSITIVE</td><td>Stream productor + Registry</td></tr>
+      <tr><td><span class="tag red">F1</span></td><td>Cada recurso se pide por ticket al proveedor</td><td>Recursos pedidos en bloque, recursos zombis, 3–4 días por solicitud</td></tr>
+      <tr><td><span class="tag red">F3</span></td><td>El proveedor cambia por consola, fuera del flujo del equipo</td><td>Drift: Git deja de ser la fuente de verdad</td></tr>
+      <tr><td><span class="tag red">F2</span></td><td>Nadie es dueño de la abstracción de entrega</td><td>Cada repositorio copia y desvía su propio pipeline</td></tr>
+      <tr><td><span class="tag red">F4</span></td><td>Un equipo central publica y da acceso a APIs ajenas</td><td>Más de 300 APIs sin dueño ni ciclo de vida</td></tr>
     </tbody>
   </table></div>
 </section>
 
+<!-- II · TOPOLOGÍAS -->
+<section class="s" id="ii-topo" data-group="ii">
+  <div class="kicker"><span class="sec">II</span>Maniobra de Conway inversa · Cuatro topologías, sin híbridos</div>
+  <h2>Primero los equipos, después la arquitectura</h2>
+  <p class="muted" style="margin-bottom:1rem">Diseñamos los equipos que producen la arquitectura de la Entrega 1: dominios dueños de su servicio y su stream, y una plataforma que entrega autoservicio.</p>
+  <figure style="margin-top:0"><svg viewBox="0 0 1000 410" role="img" aria-label="Estructura objetivo con Team Topologies: cuatro streams, un equipo habilitador, un subsistema complicado, la plataforma y el proveedor debajo" style="font-family:Arial,sans-serif">
+    <defs><marker id="m2t" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#1B2430"/></marker></defs>
+    <rect x="20" y="20" width="150" height="211" rx="10" fill="#9A79B8" fill-opacity=".18" stroke="#9A79B8" stroke-width="2"/>
+    <g text-anchor="middle" fill="#1B2430"><text x="95" y="92" font-size="16" font-weight="700">Enabling</text><text x="95" y="118" font-size="13">DevSecOps</text><text x="95" y="138" font-size="13">Contratos</text><text x="95" y="156" font-size="13">de datos</text><text x="95" y="184" font-size="12" fill="#5B6670">temporales</text></g>
+    <g fill="#E7B76A" fill-opacity=".25" stroke="#C99645" stroke-width="2"><rect x="200" y="20" width="560" height="40" rx="20"/><rect x="200" y="77" width="560" height="40" rx="20"/><rect x="200" y="134" width="560" height="40" rx="20"/><rect x="200" y="191" width="560" height="40" rx="20"/></g>
+    <g fill="#1B2430" font-size="15"><text x="222" y="45"><tspan font-weight="700">Comercios</tspan><tspan fill="#5B6670" font-size="13"> · escritor único de estado-comercio</tspan></text><text x="222" y="102"><tspan font-weight="700">Autorización</tspan><tspan fill="#5B6670" font-size="13"> · consume la ficha y decide</tspan></text><text x="222" y="159"><tspan font-weight="700">Liquidación</tspan><tspan fill="#5B6670" font-size="13"> · consume la ficha</tspan></text><text x="222" y="216"><tspan font-weight="700">Canales</tspan><tspan fill="#5B6670" font-size="13"> · POS y e-commerce</tspan></text></g>
+    <g stroke="#9A79B8" stroke-width="2" stroke-dasharray="4 4"><path d="M170 40H200"/><path d="M170 97H200"/><path d="M170 154H200"/><path d="M170 211H200"/></g>
+    <rect x="800" y="77" width="180" height="97" rx="10" fill="#D98A6C" fill-opacity=".2" stroke="#D98A6C" stroke-width="2"/>
+    <g text-anchor="middle" fill="#1B2430"><text x="890" y="113" font-size="16" font-weight="700">Scoring</text><text x="890" y="133" font-size="16" font-weight="700">antifraude</text><text x="890" y="157" font-size="12" fill="#5B6670">subsistema complicado</text></g>
+    <path d="M800 100H764" stroke="#1B2430" stroke-width="2" marker-end="url(#m2t)"/><text x="782" y="92" text-anchor="middle" font-size="11" fill="#1B2430">XaaS</text>
+    <line x1="200" y1="252" x2="980" y2="252" stroke="#1B2430" stroke-width="5"/>
+    <text x="590" y="245" text-anchor="middle" font-size="12" fill="#1B2430">X-as-a-Service · GP1 · GP2 · catálogo</text>
+    <rect x="20" y="264" width="960" height="62" rx="8" fill="#5C8FB0" fill-opacity=".2" stroke="#5C8FB0" stroke-width="2"/>
+    <g text-anchor="middle" fill="#1B2430"><text x="500" y="291" font-size="16" font-weight="700">Platform · IDP</text><text x="500" y="313" font-size="12.5" fill="#5B6670">Two-in-a-Box + 2 ingenieros que vienen de API Connect · Backstage · Argo CD · Crossplane · Kafka · Apicurio</text></g>
+    <line x1="20" y1="342" x2="980" y2="342" stroke="#1B2430" stroke-width="3"/>
+    <rect x="20" y="356" width="960" height="44" rx="6" fill="#E1E8EE" stroke="#8E98A0" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="500" y="383" text-anchor="middle" font-size="13.5" fill="#1B2430">Proveedor tercerizado · sustrato AWS (EKS, RDS, red) · solo Platform le habla, por API y GitOps</text>
+  </svg><figcaption><b>TO-BE.</b> Notación Team Topologies. La línea gruesa es una frontera X-as-a-Service y la punteada morada, facilitación.</figcaption></figure>
+  <div class="topo">
+    <div class="card sa"><span class="tag">Stream-aligned</span><div class="teams">viene de: equipos de desarrollo actuales</div><p>Dueños de su servicio, base, pipeline y stream. Comercios es el único que escribe <code>estado-comercio</code>.</p></div>
+    <div class="card pl"><span class="tag">Platform</span><div class="teams">viene de: equipo API Connect + Two-in-a-Box</div><p>Entrega GP1, GP2 y el catálogo. Única interfaz con el proveedor: los streams ya no le abren tickets.</p></div>
+    <div class="card en"><span class="tag">Enabling</span><div class="teams">viene de: seguridad y arquitectura</div><p>DevSecOps (PCI y políticas como código) y Contratos de datos. Facilitan por semanas y se extinguen.</p></div>
+    <div class="card cs"><span class="tag">Complicated-subsystem</span><div class="teams">viene de: especialistas de fraude</div><p>Scoring antifraude: existe por complejidad, no por ser compartido. Ofrece su score como servicio.</p></div>
+  </div>
+  <div class="callout"><h3>Reglas de diseño</h3><p>Un solo dueño por activo (servicio, base, API, tópico, esquema) · equipos de 5 a 9 personas · ningún equipo con más de un dominio complejo. Evitamos el «silo renombrado» (una plataforma que atiende tickets), el «equipo DevOps» que despliega por otros y los equipos de componentes.</p></div>
+</section>
+
 <!-- II · DINÁMICAS -->
 <section class="s" id="ii-dinamicas" data-group="ii">
-  <div class="kicker"><span class="sec">II</span>Dinámicas de interacción <span class="pts">10 pts</span></div>
-  <h2>De Colaboración a X-as-a-Service a medida que madura GP2</h2>
+  <div class="kicker"><span class="sec">II</span>Dinámicas de interacción · Platform ↔ Stream-aligned <span class="pts">10 pts</span></div>
+  <h2>De Colaboración a X-as-a-Service, con criterio de salida</h2>
+  <p class="muted" style="margin-bottom:.6rem">Ejemplo con GP2 (stream ECST). El modo se fija <b>por capacidad, no por equipo</b>: mientras GP2 empieza en Colaboración, GP1 ya opera como X-as-a-Service.</p>
   <div class="stage-bar" id="stageBar">
-    <button class="btn amberon on" type="button" data-st="0">Meses 0–3</button>
-    <button class="btn amberon" type="button" data-st="1">Meses 3–6</button>
-    <button class="btn amberon" type="button" data-st="2">Meses 6+</button>
+    <button class="btn amberon on" type="button" data-st="0">Meses 0–3 · Descubrir</button>
+    <button class="btn amberon" type="button" data-st="1">Meses 3–6 · Adoptar</button>
+    <button class="btn amberon" type="button" data-st="2">Meses 6+ · Consumir</button>
   </div>
-  <figure style="margin-top:0"><svg class="tl-svg" viewBox="0 0 1000 230" role="img" aria-label="Modo de interacción entre Platform, Stream-aligned y Enabling según la etapa">
-    <rect class="box" id="tPlat" x="300" y="40" width="240" height="110" rx="4" fill="#5C8FB0" fill-opacity=".18" stroke="#5C8FB0" stroke-width="2"/>
-    <rect class="box" id="tStr" x="440" y="40" width="240" height="110" rx="4" fill="#E7B76A" fill-opacity=".22" stroke="#C99645" stroke-width="2"/>
-    <rect class="box" id="tEna" x="40" y="40" width="160" height="110" rx="4" fill="#9A79B8" fill-opacity=".18" stroke="#9A79B8" stroke-width="2"/>
-    <text class="hd" id="tPlatL" x="370" y="80">Platform</text>
-    <text class="hd" id="tStrL" x="610" y="80">Comercios</text>
-    <text class="hd" id="tEnaL" x="120" y="80">Enabling</text>
-    <text class="t2" id="tEnaS" x="120" y="102">contratos de datos</text>
-    <line id="tXaaS" x1="660" y1="40" x2="660" y2="150" stroke="#1B2430" stroke-width="5" opacity="0"/>
-    <path id="tFac" d="M200 95H290" stroke="#9A79B8" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
-    <text class="mode-lbl" id="tMode" x="500" y="195">Colaboración</text>
-    <text class="t2" id="tModeS" x="500" y="215">diseño conjunto del primer productor</text>
+  <figure style="margin-top:0"><svg class="tl-svg" viewBox="0 0 1000 215" role="img" aria-label="Modo de interacción entre Platform, Stream-aligned y Enabling según la etapa">
+    <defs>
+      <pattern id="hatch2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#1B2430" stroke-width="2" stroke-opacity=".35"/></pattern>
+      <marker id="m2d" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#9A79B8"/></marker>
+      <marker id="m2p" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#5C8FB0"/></marker>
+    </defs>
+    <rect id="tEna" x="40" y="50" width="160" height="100" rx="4" fill="#9A79B8" fill-opacity=".18" stroke="#9A79B8" stroke-width="2"/>
+    <text class="hd" id="tEnaL" x="120" y="92">Enabling</text>
+    <text class="t2" id="tEnaS" x="120" y="114">contratos de datos</text>
+    <path id="tEnaA" d="" stroke="#9A79B8" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#m2d)"/>
+    <rect id="tPlat" x="300" y="50" width="240" height="100" rx="4" fill="#5C8FB0" fill-opacity=".18" stroke="#5C8FB0" stroke-width="2"/>
+    <rect id="tStr" x="450" y="50" width="240" height="100" rx="4" fill="#E7B76A" fill-opacity=".22" stroke="#C99645" stroke-width="2"/>
+    <rect id="tOv" x="450" y="50" width="90" height="100" fill="url(#hatch2)"/>
+    <path id="tFacPS" d="" stroke="#5C8FB0" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#m2p)"/>
+    <line id="tXaaS" x1="0" y1="45" x2="0" y2="155" stroke="#1B2430" stroke-width="6"/>
+    <text class="hd" id="tPlatL" x="420" y="92">Platform</text>
+    <text class="t2" id="tPlatS" x="420" y="114">GP2 en diseño</text>
+    <text class="hd" id="tStrL" x="570" y="92">Comercios</text>
+    <text class="mode-lbl" id="tMode" x="500" y="185">Colaboración</text>
+    <text class="t2" id="tModeS" x="500" y="205"></text>
   </svg></figure>
   <div class="walk" id="stageWalk">
-    <div class="lbl" id="sLbl">Meses 0–3</div>
+    <div class="lbl" id="sLbl"></div>
     <h3 id="sTitle"></h3>
-    <div class="grid two" style="margin-top:.5rem">
+    <div class="grid three" style="margin-top:.5rem">
       <div><p class="muted" style="font-size:.85rem">Platform ↔ Stream-aligned</p><p id="sPS"></p></div>
       <div><p class="muted" style="font-size:.85rem">Enabling ↔ Streams</p><p id="sES"></p></div>
+      <div><p class="muted" style="font-size:.85rem">Criterio de salida</p><p id="sOut"></p></div>
     </div>
   </div>
-  <div class="grid two" style="margin-top:1.1rem">
-    <div class="card accent"><h3>Criterio de salida</h3><p>Por ejemplo: tres equipos integrados sin intervención de la plataforma. Cumplido, la interacción pasa a X-as-a-Service.</p></div>
-    <div class="card warn"><h3>Señal de retroceso</h3><p>Si la colaboración se vuelve permanente, falta una capacidad en la plataforma: se convierte en ítem de roadmap, no en soporte continuo.</p></div>
+  <div class="callout"><h3>Señal de retroceso</h3><p>Si una colaboración no termina, a la plataforma le falta una capacidad: se vuelve ítem del roadmap, no soporte permanente.</p></div>
+</section>
+
+<!-- II · API DE EQUIPO -->
+<section class="s compact" id="ii-api" data-group="ii">
+  <div class="kicker"><span class="sec">II</span>Dinámicas de interacción · API de equipo de Platform</div>
+  <h2>Cómo se le habla a Platform sin reuniones ni tickets</h2>
+  <div class="grid two">
+    <div class="card accent"><span class="tag green" style="align-self:flex-start">Ofrece</span><p>GP1, GP2, catálogo con dueño y políticas como código.</p></div>
+    <div class="card accent"><span class="tag green" style="align-self:flex-start">Se pide</span><p>Desde el portal o con un PR al repositorio GitOps. Nunca por ticket.</p></div>
+    <div class="card accent"><span class="tag green" style="align-self:flex-start">Promete</span><p>SLO por Golden Path, versionado SemVer y aviso de 90 días antes de retirar algo.</p></div>
+    <div class="card accent"><span class="tag green" style="align-self:flex-start">Escucha</span><p>Canal asíncrono, horario de consulta semanal, roadmap público y RFC para pedir capacidades.</p></div>
   </div>
+  <div class="callout o"><h3>Lo que Platform no hace</h3><p>No escribe lógica de dominio, no opera los servicios de los streams y no aprueba cada despliegue. Si empieza a hacerlo, se volvió un silo con otro nombre.</p></div>
 </section>
 
 <!-- III · LIDERAZGO Y 80/20 -->
@@ -1071,21 +1110,37 @@ const val=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
 
 /* ---------- Línea de tiempo de interacción ---------- */
 (function(){
+  const W=240;
   const S=[
-    {lbl:'Meses 0–3',t:'Colaboración',sub:'diseño conjunto del primer productor',ps:'Colaboración: Platform y Comercios diseñan juntos el primer productor ECST. Se descubre qué debe automatizar el GP.',es:'Facilitación sobre Avro: el equipo de contratos de datos enseña a modelar el esquema.',plat:300,str:440,xaas:0,ena:1,enaS:'contratos de datos'},
-    {lbl:'Meses 3–6',t:'Facilitación',sub:'adopción del consumidor',ps:'Facilitación: Platform acompaña a Autorización a adoptar el GP suscriptor; ya no construye por él.',es:'Se retira de Comercios: el equipo ya modela sus contratos solo.',plat:240,str:560,xaas:0,ena:.6,enaS:'se retira de Comercios'},
-    {lbl:'Meses 6+',t:'X-as-a-Service',sub:'suscripción y plantilla',ps:'X-as-a-Service: cualquier equipo publica o se suscribe con la plantilla, sin hablar con Platform.',es:'Se extingue: la capacidad quedó en los equipos y en la plataforma.',plat:200,str:700,xaas:1,ena:.15,enaS:'extinguido'}
+    {lbl:'Meses 0–3 · Descubrir',t:'Colaboración',sub:'Platform y Comercios codiseñan el GP publicador',plat:300,str:450,name:'Comercios',ps2:'GP2 en diseño',enaS:'contratos de datos',ena:1,
+     ps:'Platform y Comercios diseñan juntos el primer productor ECST y descubren qué debe automatizar el GP. Es temporal: cuesta carga cognitiva a ambos.',
+     es:'Contratos de datos facilita a Comercios: modelar MerchantState en Avro y entender FULL_TRANSITIVE.',
+     out:'Comercios publica estado-comercio con el GP sin que Platform toque su código.'},
+    {lbl:'Meses 3–6 · Adoptar',t:'Facilitación',sub:'Platform enseña el GP suscriptor; no construye por los equipos',plat:290,str:590,name:'Consumidores',ps2:'GP2 en adopción',enaS:'se retira',ena:.6,
+     ps:'Platform acompaña a Autorización, Liquidación y Antifraude a adoptar el GP suscriptor. Enseña; el código lo escribe cada equipo.',
+     es:'Contratos de datos se retira de Comercios. DevSecOps facilita las políticas como código de cada stream.',
+     out:'Tres consumidores integrados sin intervención de Platform; las dudas ya son casos raros.'},
+    {lbl:'Meses 6+ · Consumir',t:'X-as-a-Service',sub:'cualquier stream publica o se suscribe desde el portal',plat:270,str:650,name:'Todos los streams',ps2:'GP2 como producto',enaS:'extinguido',ena:.15,
+     ps:'Cualquier stream publica o se suscribe sin hablar con Platform. La relación queda en su API de equipo.',
+     es:'Contratos de datos se extingue: la capacidad quedó en los equipos y en el GP.',
+     out:'Se sostiene mientras la adopción sea voluntaria y no reaparezcan tickets de eventos.'}
   ];
   const $=id=>document.getElementById(id), btns=[...document.querySelectorAll('#stageBar .btn')];
   function go(i){
     const s=S[i];btns.forEach((b,k)=>b.classList.toggle('on',k===i));
     $('tPlat').setAttribute('x',s.plat);$('tStr').setAttribute('x',s.str);
-    $('tPlatL').setAttribute('x',s.plat+120);$('tStrL').setAttribute('x',s.str+120);
-    $('tXaaS').setAttribute('x1',s.str-10);$('tXaaS').setAttribute('x2',s.str-10);$('tXaaS').style.opacity=s.xaas;
-    $('tStrL').textContent=i===0?'Comercios':i===1?'Autorización':'Todos los streams';
+    const ov=Math.max(0,s.plat+W-s.str);
+    const pc=s.plat+(W-ov)/2, sc=s.str+ov+(W-ov)/2;
+    $('tPlatL').setAttribute('x',pc);$('tPlatS').setAttribute('x',pc);$('tStrL').setAttribute('x',sc);
+    $('tPlatS').textContent=s.ps2;$('tStrL').textContent=s.name;
+    $('tOv').setAttribute('x',s.str);$('tOv').setAttribute('width',ov);$('tOv').style.opacity=ov?1:0;
+    const gap=s.str-(s.plat+W);
+    $('tFacPS').setAttribute('d',`M${s.plat+W+4} 100H${s.str-4}`);$('tFacPS').style.opacity=(i===1)?1:0;
+    const xm=s.plat+W+gap/2;$('tXaaS').setAttribute('x1',xm);$('tXaaS').setAttribute('x2',xm);$('tXaaS').style.opacity=(i===2)?1:0;
+    $('tEnaA').setAttribute('d',`M200 70C260 10 ${s.str+W/2} 8 ${s.str+W/2} 46`);
+    ['tEna','tEnaL','tEnaS','tEnaA'].forEach(k=>$(k).style.opacity=s.ena);$('tEnaS').textContent=s.enaS;
     $('tMode').textContent=s.t;$('tModeS').textContent=s.sub;
-    ['tEna','tEnaL','tEnaS','tFac'].forEach(k=>$(k).style.opacity=s.ena);$('tEnaS').textContent=s.enaS;
-    $('sLbl').textContent=s.lbl;$('sTitle').textContent=s.t;$('sPS').textContent=s.ps;$('sES').textContent=s.es;
+    $('sLbl').textContent=s.lbl;$('sTitle').textContent=s.t;$('sPS').textContent=s.ps;$('sES').textContent=s.es;$('sOut').textContent=s.out;
   }
   btns.forEach((b,i)=>b.addEventListener('click',()=>go(i)));go(0);
 })();
